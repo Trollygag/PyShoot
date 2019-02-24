@@ -6,16 +6,24 @@ from scipy.spatial import ConvexHull
 import numpy as np
 import random
 
+# Application bounds
+lowerCal=0.17
+upperCal=0.5
+minShots=3
+maxShots=100000
+
 # Default Application variables
-accuracy=1.5 #MOA
-shotcount=10
+accuracy=1.0 #MOA
+shotcount=3
+# inches. This simply controls how big the dots are
+caliber=0.308 
 
 # Override from command line
 def printUsage() :
-    print("PyShoot.py -h (help) -a <accuracy in MOA> -c <number of shots in the group>")
+    print("PyShoot.py -h (help) -a <accuracy in MOA> -s <number of shots in the group> -c <caliber in inches>")
     
 try:
-    opts, args = getopt.getopt(sys.argv[1:],"ha:c:")
+    opts, args = getopt.getopt(sys.argv[1:],"ha:s:c:")
 except getopt.GetoptError:
     printUsage()
     sys.exit(2)
@@ -24,9 +32,21 @@ for opt, arg in opts:
         printUsage()
         sys.exit()
     elif opt == '-a':
-        accuracy = float(arg)
+        laccuracy = float(arg)
+        if laccuracy > 0:
+            accuracy = laccuracy
+    elif opt == '-s':
+        lshotcount = int(arg)
+        if lshotcount >= minShots and lshotcount <= maxShots:
+            shotcount = lshotcount
+        else:
+            print("Number of shots is out of range[",minShots,",",maxShots,"], defaulting to: ", shotcount)
     elif opt == '-c':
-        shotcount = int(arg)
+        lcaliber=float(arg)
+        if lcaliber >= lowerCal and lcaliber <= upperCal:
+            caliber=lcaliber
+        else:
+            print("Caliber is out of range [",lowerCal,",",upperCal,"], defaulting to: ", caliber)
 
 # TODO: Need better math for this. Should it scale based on number of shots?
 # Should it be fixed scale? Should it be 3 standard deviations as an integer?
@@ -40,8 +60,7 @@ scale=8 # MOA
 # with large sample sizes. 
 heat=0.00
 
-# inches. This simply controls how big the dots are
-caliber=0.308 
+
 
 # You can add or remove colors. More colors makes individual shots easier to spot
 colors=['r','g','b','orange','gold','purple','darkcyan','sienna'] 
@@ -68,7 +87,7 @@ fig, ax = plt.subplots() # note we must use plt.subplots, not plt.subplot
 
 # Draw target dot
 ax.add_artist(plt.Circle((scale/2, scale/2), 0.5, fill=False, linewidth=8))
-ax.add_artist(plt.Circle((scale/2, scale/2), 0.125, color='darkorange'))
+ax.add_artist(plt.Circle((scale/2, scale/2), 0.125, color='black'))
 
 # Draw grid (square)
 for i in range(int(scale)):
@@ -85,7 +104,7 @@ distances=[]
 # Draw connectors for the convex hull
 for simplex in hull.simplices:
     print(simplex)
-    plt.plot(hull.points[simplex,0], hull.points[simplex,1], 'k-')
+    plt.plot(hull.points[simplex,0], hull.points[simplex,1], 'k-', color='dimgray')
 
 # Calculate max polygon diameter. I don't know how to code a rotating calipers algorithm
 # so for now, I'm just brute forcing this.
@@ -115,7 +134,7 @@ for idx in range(len(hull.vertices)):
 print (maxLength)
 
 # Draw line between the points of the max diameter
-plt.plot((exp1, exp2), (eyp1,eyp2),color='gold', linewidth=5)
+plt.plot((exp1, exp2), (eyp1,eyp2),color='gold', linewidth=int(caliber*5+1))
 
 # Set dimensions
 plt.ylim(0,scale)

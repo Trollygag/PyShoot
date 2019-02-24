@@ -7,7 +7,7 @@ import random
 
 # Application variables
 accuracy=1.5 #MOA
-shotcount=3
+shotcount=10
 
 
 # TODO: Need better math for this. Should it scale based on number of shots?

@@ -16,37 +16,7 @@ maxShots=100000
 accuracy=1.0 #MOA
 shotcount=3
 # inches. This simply controls how big the dots are
-caliber=0.308 
-
-# Override from command line
-def printUsage() :
-    print("PyShoot.py -h (help) -a <accuracy in MOA> -s <number of shots in the group> -c <caliber in inches>")
-    
-try:
-    opts, args = getopt.getopt(sys.argv[1:],"ha:s:c:")
-except getopt.GetoptError:
-    printUsage()
-    sys.exit(2)
-for opt, arg in opts:
-    if opt == '-h':
-        printUsage()
-        sys.exit()
-    elif opt == '-a':
-        laccuracy = float(arg)
-        if laccuracy > 0:
-            accuracy = laccuracy
-    elif opt == '-s':
-        lshotcount = int(arg)
-        if lshotcount >= minShots and lshotcount <= maxShots:
-            shotcount = lshotcount
-        else:
-            print("Number of shots is out of range[",minShots,",",maxShots,"], defaulting to: ", shotcount)
-    elif opt == '-c':
-        lcaliber=float(arg)
-        if lcaliber >= lowerCal and lcaliber <= upperCal:
-            caliber=lcaliber
-        else:
-            print("Caliber is out of range [",lowerCal,",",upperCal,"], defaulting to: ", caliber)
+caliber=0.308
 
 # TODO: Need better math for this. Should it scale based on number of shots?
 # Should it be fixed scale? Should it be 3 standard deviations as an integer?
@@ -59,6 +29,57 @@ scale=8 # MOA
 # Even small values fot his, like 0.01 MOA dispersion increase per shot, can become big
 # with large sample sizes. 
 heat=0.00
+
+# Override from command line
+def printUsage() :
+    print("PyShoot.py")
+    print("\t-h (help)")
+    print("\t-a <accuracy in MOA>")
+    print("\t-n <number of shots in the group>")
+    print("\t-c <caliber in inches>")
+    print("\t-x <heat dispersion per shot>")
+    print("\t-s <scale in MOA (min 2)>")
+    
+    
+try:
+    opts, args = getopt.getopt(sys.argv[1:],"ha:n:c:x:s:")
+except getopt.GetoptError:
+    printUsage()
+    sys.exit(2)
+for opt, arg in opts:
+    if opt == '-h':
+        printUsage()
+        sys.exit()
+    elif opt == '-a':
+        laccuracy = float(arg)
+        if laccuracy > 0:
+            accuracy = laccuracy
+    elif opt == '-n':
+        lshotcount = int(arg)
+        if lshotcount >= minShots and lshotcount <= maxShots:
+            shotcount = lshotcount
+        else:
+            print("Number of shots is out of range[",minShots,",",maxShots,"], defaulting to: ", shotcount)
+    elif opt == '-x':
+        lheat = float(arg)
+        if lheat >= 0:
+            heat=lheat
+        else:
+            print("Heat given is out of range, [0,∞]")
+    elif opt == '-s':
+        lscale = int(arg)
+        if lscale >=2:
+            scale=lscale
+        else:
+            print("Scale given is out of range, [2,∞]")
+    elif opt == '-c':
+        lcaliber=float(arg)
+        if lcaliber >= lowerCal and lcaliber <= upperCal:
+            caliber=lcaliber
+        else:
+            print("Caliber is out of range [",lowerCal,",",upperCal,"], defaulting to: ", caliber)
+
+
 
 
 

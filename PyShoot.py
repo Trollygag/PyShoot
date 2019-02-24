@@ -1,14 +1,32 @@
 # Needed imports
 import matplotlib.pyplot as plt
+import sys, getopt
 import math
 from scipy.spatial import ConvexHull
 import numpy as np
 import random
 
-# Application variables
+# Default Application variables
 accuracy=1.5 #MOA
 shotcount=10
 
+# Override from command line
+def printUsage() :
+    print("PyShoot.py -h (help) -a <accuracy in MOA> -c <number of shots in the group>")
+    
+try:
+    opts, args = getopt.getopt(sys.argv[1:],"ha:c:")
+except getopt.GetoptError:
+    printUsage()
+    sys.exit(2)
+for opt, arg in opts:
+    if opt == '-h':
+        printUsage()
+        sys.exit()
+    elif opt == '-a':
+        accuracy = float(arg)
+    elif opt == '-c':
+        shotcount = int(arg)
 
 # TODO: Need better math for this. Should it scale based on number of shots?
 # Should it be fixed scale? Should it be 3 standard deviations as an integer?

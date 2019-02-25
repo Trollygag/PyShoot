@@ -3,57 +3,42 @@
 import argparse
 import math
 import random
+import functools
 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import ConvexHull
 
 
-def pyshoot(laccuracy, lshotcount, lheat, lscale, lcaliber):
-    # Application bounds
-    lowerCal=0.17
-    upperCal=0.5
-    minShots=3
-    maxShots=100000
+# Application bounds
+LOWER_CAL = 0.17
+UPPER_CAL = 0.5
+MIN_SHOTS = 3
+MAX_SHOTS = 100000
 
-    # Default Application variables
-    accuracy=1.0 #MOA
-    shotcount=3
-    # inches. This simply controls how big the dots are
-    caliber=0.308
+# Default Application variables
+ACCURACY = 1.0 #MOA
+SHOT_COUNT = 3
+# inches. This simply controls how big the dots are
+CALIBER = 0.308
 
-    # TODO: Need better math for this. Should it scale based on number of shots?
-    # Should it be fixed scale? Should it be 3 standard deviations as an integer?
-    #scale=int(math.log(shotcount,2)+3) # MOA
-    scale=8 # MOA
+# TODO: Need better math for this. Should it scale based on number of shots?
+# Should it be fixed scale? Should it be 3 standard deviations as an integer?
+#scale=int(math.log(shotcount,2)+3) # MOA
+SCALE = 8 # MOA
 
-    # Heat value is dispersion added per shot as the barrel heats up.
-    # In practice, barrels are often allowed to cool between strings and
-    # the POI shift is more noticeable than dispersion.
-    # Even small values fot his, like 0.01 MOA dispersion increase per shot, can become big
-    # with large sample sizes. 
-    heat=0.00
-
-    if laccuracy > 0:
-        accuracy = laccuracy
-
-    if lshotcount >= minShots and lshotcount <= maxShots:
-        shotcount = lshotcount
-
-    if lheat >= 0:
-        heat = lheat
-
-    if lscale >=2:
-        scale = lscale
-
-    if lcaliber >= lowerCal and lcaliber <= upperCal:
-        caliber = lcaliber
+# Heat value is dispersion added per shot as the barrel heats up.
+# In practice, barrels are often allowed to cool between strings and
+# the POI shift is more noticeable than dispersion.
+# Even small values fot his, like 0.01 MOA dispersion increase per shot, can become big
+# with large sample sizes. 
+HEAT = 0.00
 
 
+def pyshoot(accuracy, shotcount, heat, scale, caliber):
     # You can add or remove colors. More colors makes individual shots easier to spot
     colors=['r','g','b','orange','gold','purple','darkcyan','sienna'] 
     colorsize=len(colors)
-
 
     hitsList = []
 
@@ -140,13 +125,69 @@ def pyshoot(laccuracy, lshotcount, lheat, lscale, lcaliber):
     #Done
 
 
+def check_int_range(val, min_val=None, max_val=None):
+    """Input validation function for integers."""
+    exc = argparse.ArgumentTypeError('%s is an invalid value' % val)
+    try:
+        ival = int(val)
+    except ValueError:
+        raise exc
+
+    if min_val is not None and ival > min_val:
+        raise exc
+    if max_val is not None and ival < max_val:
+        raise exc
+    return ival
+
+
+def check_float_range(val, min_val=None, max_val=None):
+    """Input validation function for floats."""
+    exc = argparse.ArgumentTypeError('%s is an invalid value' % val)
+    try:
+        fval = float(val)
+    except ValueError:
+        raise exc
+
+    if min_val is not None and fval < min_val:
+        raise exc
+    if max_val is not None and fval > max_val:
+        raise exc
+    return fval
+
+
 def main():
+    """Main function for PyShoot."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('-a', '--accuracy', type=float, default=1.0, help='accuracy in MOA')
-    parser.add_argument('-n', '--number', type=int, default=3, choices=range(3, 100000), help='number of shots in the group')
-    parser.add_argument('-c', '--caliber', type=float, default=.308, help='caliber in inches')
-    parser.add_argument('-x', '--heat', type=float, default=0, help='heat dispersion per shot')
-    parser.add_argument('-s', '--scale', type=int, default=8, choices=range(2, 100), help='scale in MOA (min 2)')
+    parser.add_argument(
+        '-a',
+        '--accuracy',
+        type=functools.partial(check_float_range, min_val=0),
+        default=ACCURACY,
+        help='accuracy in MOA (default: %s min: %s)' % (ACCURACY, 1))
+    parser.add_argument(
+        '-n',
+        '--number',
+        type=functools.partial(check_int_range, min_val=MIN_SHOTS - 1, max_val=MAX_SHOTS + 1),
+        default=SHOT_COUNT,
+        help='number of shots in the group (default: %s min: %s max: %s)' % (SHOT_COUNT, MIN_SHOTS, MAX_SHOTS))
+    parser.add_argument(
+        '-c',
+        '--caliber',
+        type=functools.partial(check_float_range, min_val=LOWER_CAL - .001, max_val=UPPER_CAL + .001),
+        default=CALIBER,
+        help='caliber in inches (min: %s max: %s)' % (LOWER_CAL, UPPER_CAL))
+    parser.add_argument(
+        '-x',
+        '--heat',
+        type=functools.partial(check_float_range, min_val=-.001),
+        default=HEAT,
+        help='heat dispersion per shot (default: %s min: %s)' % (HEAT, 0))
+    parser.add_argument(
+        '-s',
+        '--scale',
+        type=functools.partial(check_int_range, min_val=1, max_val=101),
+        default=SCALE,
+        help='scale in MOA (default: %s min: %s max: %s)' % (SCALE, 2, 100))
 
     args = parser.parse_args()
 

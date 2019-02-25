@@ -5,14 +5,13 @@ import getopt
 import math
 import random
 import sys
-from decimal import Decimal
 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import ConvexHull
 
 
-def pyshoot():
+def pyshoot(laccuracy, lshotcount, lheat, lscale, lcaliber):
     # Application bounds
     lowerCal=0.17
     upperCal=0.5
@@ -37,57 +36,20 @@ def pyshoot():
     # with large sample sizes. 
     heat=0.00
 
-    # Override from command line
-    def printUsage() :
-        print("PyShoot.py")
-        print("\t-h (help)")
-        print("\t-a <accuracy in MOA>")
-        print("\t-n <number of shots in the group>")
-        print("\t-c <caliber in inches>")
-        print("\t-x <heat dispersion per shot>")
-        print("\t-s <scale in MOA (min 2)>")
-        
-        
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],"ha:n:c:x:s:")
-    except getopt.GetoptError:
-        printUsage()
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt == '-h':
-            printUsage()
-            sys.exit()
-        elif opt == '-a':
-            laccuracy = float(arg)
-            if laccuracy > 0:
-                accuracy = laccuracy
-        elif opt == '-n':
-            lshotcount = int(arg)
-            if lshotcount >= minShots and lshotcount <= maxShots:
-                shotcount = lshotcount
-            else:
-                print("Number of shots is out of range[",minShots,",",maxShots,"], defaulting to: ", shotcount)
-        elif opt == '-x':
-            lheat = float(arg)
-            if lheat >= 0:
-                heat=lheat
-            else:
-                print("Heat given is out of range, [0,∞]")
-        elif opt == '-s':
-            lscale = int(arg)
-            if lscale >=2:
-                scale=lscale
-            else:
-                print("Scale given is out of range, [2,∞]")
-        elif opt == '-c':
-            lcaliber=float(arg)
-            if lcaliber >= lowerCal and lcaliber <= upperCal:
-                caliber=lcaliber
-            else:
-                print("Caliber is out of range [",lowerCal,",",upperCal,"], defaulting to: ", caliber)
+    if laccuracy > 0:
+        accuracy = laccuracy
 
+    if lshotcount >= minShots and lshotcount <= maxShots:
+        shotcount = lshotcount
 
+    if lheat >= 0:
+        heat = lheat
 
+    if lscale >=2:
+        scale = lscale
+
+    if lcaliber >= lowerCal and lcaliber <= upperCal:
+        caliber = lcaliber
 
 
     # You can add or remove colors. More colors makes individual shots easier to spot
@@ -182,13 +144,15 @@ def pyshoot():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-a', type=Decimal, default=Decimal('1.0'), help='accuracy in MOA')
-    parser.add_argument('-n', type=int, default=3, choices=range(3, 100000) help='number of shots in the group')
-    parser.add_argument('-c', type=Decimal, default=Decimal('.308'), help='caliber in inches')
-    parser.add_argument('-x', type=Decimal, default=Decimal('0'), help='heat dispersion per shot')
-    parser.add_argument('-s', type=int, default=8, choices=range(2, 100), help='scale in MOA (min 2)')
+    parser.add_argument('-a', '--accuracy', type=float, default=1.0, help='accuracy in MOA')
+    parser.add_argument('-n', '--number', type=int, default=3, choices=range(3, 100000), help='number of shots in the group')
+    parser.add_argument('-c', '--caliber', type=float, default=.308, help='caliber in inches')
+    parser.add_argument('-x', '--heat', type=float, default=0, help='heat dispersion per shot')
+    parser.add_argument('-s', '--scale', type=int, default=8, choices=range(2, 100), help='scale in MOA (min 2)')
 
-    parser.parse_args()
+    args = parser.parse_args()
+
+    pyshoot(args.accuracy, args.number, args.heat, args.scale, args.caliber)
 
 
 if __name__ == '__main__':

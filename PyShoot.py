@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 
-# Needed imports
-import matplotlib.pyplot as plt
-import sys, getopt
+import argparse
+import getopt
 import math
-from scipy.spatial import ConvexHull
-import numpy as np
 import random
+import sys
+from decimal import Decimal
+
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.spatial import ConvexHull
+
 
 # Application bounds
 lowerCal=0.17
@@ -173,3 +177,18 @@ plt.title(titleStr)
 plt.show()
 
 #Done
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-a', type=Decimal, default=Decimal('1.0'), help='accuracy in MOA')
+    parser.add_argument('-n', type=int, default=3, choices=range(3, 100000) help='number of shots in the group')
+    parser.add_argument('-c', type=Decimal, default=Decimal('.308'), help='caliber in inches')
+    parser.add_argument('-x', type=Decimal, default=Decimal('0'), help='heat dispersion per shot')
+    parser.add_argument('-s', type=int, default=8, choices=range(2, 100), help='scale in MOA (min 2)')
+
+    parser.parse_args()
+
+
+if __name__ == '__main__':
+    main()

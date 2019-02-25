@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
 import argparse
-import getopt
 import math
 import random
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np

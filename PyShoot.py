@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Needed imports
 import matplotlib.pyplot as plt
 import sys, getopt

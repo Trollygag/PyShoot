@@ -18,9 +18,8 @@ MAX_SHOTS = 100000
 
 # Default Application variables
 ACCURACY = 1.0 #MOA
-ACCURACY_CORRECTION=3.125
 
-SHOT_COUNT = 3
+SHOT_COUNT = 5
 # inches. This simply controls how big the dots are
 CALIBER = 0.308
 
@@ -36,6 +35,9 @@ SCALE = 8 # MOA
 # with large sample sizes. 
 HEAT = 0.00
 
+# This is a correction to accuracy so that the normal distribution produces the mean
+ACCURACY_CORRECTION=3.125
+
 
 def pyshoot(accuracy, shotcount, heat, scale, caliber):
     # You can add or remove colors. More colors makes individual shots easier to spot
@@ -50,7 +52,7 @@ def pyshoot(accuracy, shotcount, heat, scale, caliber):
     def addHits(ax) :
         
         for shot in range(shotcount):
-            point = np.random.normal(scale/2, ((accuracy/accuracy_correction)+(heat)*shot),2)
+            point = np.random.normal(scale/2, ((accuracy+(heat)*shot)/ACCURACY_CORRECTION),2)
             hitsList.append(point)
             circle = plt.Circle(point, caliber/2, color=colors[shot%colorsize])
             ax.add_artist(circle)

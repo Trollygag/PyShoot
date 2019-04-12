@@ -18,6 +18,8 @@ MAX_SHOTS = 100000
 
 # Default Application variables
 ACCURACY = 1.0 #MOA
+ACCURACY_CORRECTION=3.125
+
 SHOT_COUNT = 3
 # inches. This simply controls how big the dots are
 CALIBER = 0.308
@@ -48,7 +50,7 @@ def pyshoot(accuracy, shotcount, heat, scale, caliber):
     def addHits(ax) :
         
         for shot in range(shotcount):
-            point = np.random.normal(scale/2, ((accuracy/2)+(heat)*shot),2)
+            point = np.random.normal(scale/2, ((accuracy/accuracy_correction)+(heat)*shot),2)
             hitsList.append(point)
             circle = plt.Circle(point, caliber/2, color=colors[shot%colorsize])
             ax.add_artist(circle)

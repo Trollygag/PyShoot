@@ -38,23 +38,57 @@ HEAT = 0.00
 # This is a correction to accuracy so that the normal distribution produces the mean
 ACCURACY_CORRECTION=3.125
 
+# This stores the max ES and the coordinates from the lines carrying them.
+class ESParameters:
+    def __init__(self, es, exp1, exp2, eyp1, eyp2):
+        self.es = es
+        self.exp1 = exp1
+        self.exp2 = exp2
+        self.eyp1 = eyp1
+        self.eyp2 = eyp2
+        
 
-def pyshoot(accuracy, shotcount, heat, scale, caliber):
+# This function just generates groups
+def generateGroup(accuracy, shotcount, heat, scale):
+    hitsList = []
+    for shot in range(shotcount):
+            hitsList.append(np.random.normal(scale/2, ((accuracy+(heat)*shot)/ACCURACY_CORRECTION),2))
+    return hitsList
+
+# Calculate max polygon diameter. I don't know how to code a rotating calipers algorithm
+# so for now, I'm just brute forcing this.
+def calculateES(hull) :
+    maxLength = 0
+    exp1 = 0
+    exp2 = 0
+    eyp1 = 0
+    eyp2 = 0
+    for idx in range(len(hull.vertices)):
+        for idx2 in range(idx+1,len(hull.vertices)):
+            xp1 = hull.points[hull.vertices[idx],0]
+            xp2 = hull.points[hull.vertices[idx2],0]
+            yp1 = hull.points[hull.vertices[idx],1]
+            yp2 = hull.points[hull.vertices[idx2],1]
+            xdiff=math.fabs(xp2-xp1)
+            ydiff=math.fabs(yp2-yp1)
+            distance = math.hypot(xdiff, ydiff)
+            if(distance > maxLength):
+                maxLength = distance
+                exp1=xp1
+                exp2=xp2
+                eyp1=yp1
+                eyp2=yp2
+    return ESParameters(maxLength, exp1, exp2, eyp1, eyp2)
+
+def drawTarget(hitsList, hull, esParams, scale, caliber):
     # You can add or remove colors. More colors makes individual shots easier to spot
     colors=['r','g','b','orange','gold','purple','darkcyan','sienna'] 
     colorsize=len(colors)
 
-    hitsList = []
-
-    # This function might be doing a little too much. If you give it the model, it will
-    # pull the application variables for shot count, scale, accuracy, and heat, and turn them
-    # into a normal distribution of circles.
-    def addHits(ax) :
-        
-        for shot in range(shotcount):
-            point = np.random.normal(scale/2, ((accuracy+(heat)*shot)/ACCURACY_CORRECTION),2)
-            hitsList.append(point)
-            circle = plt.Circle(point, caliber/2, color=colors[shot%colorsize])
+    # This function just draws dots
+    def drawHits(ax) :
+        for shot in range(1,len(hitsList)):
+            circle = plt.Circle(hitsList[shot], caliber/2, color=colors[shot%colorsize])
             ax.add_artist(circle)
         return ax
        
@@ -72,46 +106,15 @@ def pyshoot(accuracy, shotcount, heat, scale, caliber):
         plt.plot((i,i), (0,scale), linewidth=0.5,color='black')
 
     # Draw hit distribution
-    ax = addHits(ax)
+    ax = drawHits(ax)
 
-    # Calculate convex hull (polygon that captures the outside of the hits)
-    hull=ConvexHull(hitsList)
-
-    distances=[]
     # Draw connectors for the convex hull
     for simplex in hull.simplices:
         print(simplex)
         plt.plot(hull.points[simplex,0], hull.points[simplex,1], 'k-', color='dimgray')
 
-    # Calculate max polygon diameter. I don't know how to code a rotating calipers algorithm
-    # so for now, I'm just brute forcing this.
-    maxLength = 0
-    exp1 = 0
-    exp2 = 0
-    eyp1 = 0
-    eyp2 = 0
-    print("Total Vertices: ", len(hull.vertices))
-    for idx in range(len(hull.vertices)):
-        for idx2 in range(idx+1,len(hull.vertices)):
-            xp1 = hull.points[hull.vertices[idx],0]
-            xp2 = hull.points[hull.vertices[idx2],0]
-            yp1 = hull.points[hull.vertices[idx],1]
-            yp2 = hull.points[hull.vertices[idx2],1]
-            xdiff=math.fabs(xp2-xp1)
-            ydiff=math.fabs(yp2-yp1)
-            distance = math.hypot(xdiff, ydiff)
-            if(distance > maxLength):
-                maxLength = distance
-                exp1=xp1
-                exp2=xp2
-                eyp1=yp1
-                eyp2=yp2
-            print("Evaluating: (", xp1, ",",yp1,") and (", xp2, ",",yp2,") to difference: ", distance)
-
-    print (maxLength)
-
     # Draw line between the points of the max diameter
-    plt.plot((exp1, exp2), (eyp1,eyp2),color='gold', linewidth=int(caliber*5+1))
+    plt.plot((esParams.exp1, esParams.exp2), (esParams.eyp1,esParams.eyp2),color='gold', linewidth=int(caliber*5+1))
 
     # Set dimensions
     plt.ylim(0,scale)
@@ -119,15 +122,21 @@ def pyshoot(accuracy, shotcount, heat, scale, caliber):
     plt.gca().set_aspect('equal', adjustable='box')
 
     # Set title with the MOA calculation of polygon distance
-    titleStr="Dispersion: "+format(maxLength, '.2f')+" MOA C-C"
+    titleStr="Dispersion: "+format(esParams.es, '.2f')+" MOA C-C"
     plt.title(titleStr)
-
 
     # Draw
     plt.show()
 
     #Done
 
+
+def pyshoot(accuracy, number, heat, scale, caliber) :
+    hitsList = generateGroup(accuracy, number, heat, scale)
+    # Calculate convex hull (polygon that captures the outside of the hits)
+    hull=ConvexHull(hitsList)
+    esParams = calculateES(hull)
+    drawTarget(hitsList, hull, esParams, scale, caliber)
 
 def check_int_range(val, min_val=None, max_val=None):
     """Input validation function for integers."""
@@ -196,7 +205,6 @@ def main():
     args = parser.parse_args()
 
     pyshoot(args.accuracy, args.number, args.heat, args.scale, args.caliber)
-
 
 if __name__ == '__main__':
     main()

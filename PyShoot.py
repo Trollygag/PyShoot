@@ -137,9 +137,9 @@ def check_int_range(val, min_val=None, max_val=None):
     except ValueError:
         raise exc
 
-    if min_val is not None and ival > min_val:
+    if min_val is not None and ival < min_val:
         raise exc
-    if max_val is not None and ival < max_val:
+    if max_val is not None and ival > max_val:
         raise exc
     return ival
 
@@ -167,7 +167,7 @@ def main():
         '--accuracy',
         type=functools.partial(check_float_range, min_val=0),
         default=ACCURACY,
-        help='accuracy in MOA (default: %s min: %s)' % (ACCURACY, 1))
+        help='accuracy in MOA (default: %s min: %s)' % (ACCURACY, 0.1))
     parser.add_argument(
         '-n',
         '--number',

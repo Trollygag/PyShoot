@@ -4,16 +4,20 @@ from tkinter import *
 import PyShoot
 top = tk.Tk()
 
+DEBUG_MODE=False
 
+
+# Kick off the PyShoot diagram
 def callback():
-    accuracy=e1.get()
-    shots=e2.get()
+    accuracy=accuracyEntry.get()
+    shots=shotsEntry.get()
     if accuracy and shots:
         PyShoot.pyshootlite(float(accuracy),int(shots))
 
+# Kick off the debug mode
 def debug():
-    accuracy=e1.get()
-    shots=e2.get()
+    accuracy=accuracyEntry.get()
+    shots=shotsEntry.get()
     if accuracy and shots:
         totalTests = 10000
         totalResult = 0
@@ -22,27 +26,29 @@ def debug():
         calcMOAVariable.set(format((totalResult / totalTests), '.2f'))
         expMOAVariable.set(accuracy)
 
-
+# Set up GUI
 button = tk.Button(top, text="Pyshoot", command=callback).grid(row=3,column=0)
-debugButton = tk.Button(top, text="Debug", command=debug).grid(row=3,column=1)
-calcMOAVariable = StringVar()
-calcMOAVariable.set("")
-expMOAVariable = StringVar()
-expMOAVariable.set("")
-
 tk.Label(top, text="Accuracy (MOA):", anchor="w").grid(row=0)
 tk.Label(top, text="Shots:", anchor="w").grid(row=1)
-calcLabel = tk.Label(top, text="Calc MOA: ", anchor="w").grid(row=4, column=0)
-calcResLabel = tk.Label(top, textvariable=calcMOAVariable, anchor="w").grid(row=4, column=1)
-expLabel = tk.Label(top, text="Expect MOA: ", anchor="w").grid(row=5, column=0)
-expMOALabel = tk.Label(top, textvariable=expMOAVariable, anchor="w").grid(row=5, column=1)
+accuracyEntry = tk.Entry(top)
+shotsEntry = tk.Entry(top)
+accuracyEntry.insert(0, PyShoot.ACCURACY);
+shotsEntry.insert(0, PyShoot.MIN_SHOTS);
 
-e1 = tk.Entry(top)
-e2 = tk.Entry(top)
-e1.insert(0, "1");
-e2.insert(0, "3");
+accuracyEntry.grid(row=0, column=1)
+shotsEntry.grid(row=1, column=1)
 
-e1.grid(row=0, column=1)
-e2.grid(row=1, column=1)
+if DEBUG_MODE:
+    # Set up Debug
+    debugButton = tk.Button(top, text="Debug", command=debug).grid(row=3,column=1)
+    calcMOAVariable = StringVar()
+    expMOAVariable = StringVar()
+    calcMOAVariable.set("")
+    expMOAVariable.set("")
+    calcLabel = tk.Label(top, text="Calc MOA: ", anchor="w").grid(row=4, column=0)
+    calcResLabel = tk.Label(top, textvariable=calcMOAVariable, anchor="w").grid(row=4, column=1)
+    expLabel = tk.Label(top, text="Expect MOA: ", anchor="w").grid(row=5, column=0)
+    expMOALabel = tk.Label(top, textvariable=expMOAVariable, anchor="w").grid(row=5, column=1)
+
 
 top.mainloop()

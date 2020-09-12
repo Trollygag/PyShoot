@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import tkinter as tk
+import threading
 from tkinter import *
 import PyShoot
 
@@ -17,8 +18,12 @@ DEBUG_MODE=False
 def callback():
     accuracy=accuracyEntry.get()
     shots=shotsEntry.get()
-    if accuracy and shots:
-        PyShoot.pyshootlite(float(accuracy),int(shots))
+    heat=heatEntry.get()
+    caliber=caliberEntry.get()
+    if accuracy and shots and heat and caliber:
+        for i in range(0, int(totalTestSlider.get())) :
+            PyShoot.pyshootlite(float(accuracy),int(shots), float(heat), float(caliber))
+        PyShoot.show()                                            
 
 # Displays the debug menu
 def displayDebug():
@@ -44,7 +49,7 @@ def displayDebug():
     debugStartButton = tk.Button(top, text="Debug Start", command= lambda: debug(totalTestSlider,calcMOAVariable,expMOAVariable), bg='red', fg='white').grid(row=debugButtonRow,columnspan=2)
 
 # Kick off the debug mode
-def debug(totalTestSlider,calcMOAVariable,expMOAVariable):
+def debug(totalTestSlider, calcMOAVariable, expMOAVariable):
     accuracy=accuracyEntry.get()
     shots=shotsEntry.get()
     if accuracy and shots:
@@ -56,19 +61,40 @@ def debug(totalTestSlider,calcMOAVariable,expMOAVariable):
         expMOAVariable.set(accuracy)
         
 # Set up GUI
+
+# Set up row layout
 accuracyRow = 0
 shotsRow = accuracyRow + 1
-buttonRow = shotsRow + 1
+heatRow = shotsRow + 1
+caliberRow = heatRow + 1
+inputRow = caliberRow
+testSampleRow = inputRow + 1
+buttonRow = testSampleRow + 1
+
+# Trials section
+tk.Label(top, text="Number Trials:", anchor="w", bg=themeColor,fg='white').grid(row=testSampleRow, column=0)
+totalTestSlider = tk.Scale(top, from_=1, to=20, orient=HORIZONTAL, bg=themeColor,fg='white')
+totalTestSlider.grid(row=testSampleRow, column=1)
+totalTestSlider.set(1)
+
+# Main section
 button = tk.Button(top, text="Pyshoot", command=callback, bg='black', fg='white').grid(row=buttonRow,column=0)
 debugButton = tk.Button(top, text="Debug", command=displayDebug, bg='black', fg='white').grid(row=buttonRow,column=1)
 tk.Label(top, text="Accuracy (MOA):", anchor="w", bg=themeColor,fg='white').grid(row=accuracyRow)
 tk.Label(top, text="Shots:", anchor="w", bg=themeColor,fg='white').grid(row=shotsRow)
+tk.Label(top, text="Heat Affect (MOA/Shot):", anchor="w", bg=themeColor,fg='white').grid(row=heatRow)
+tk.Label(top, text="Caliber (in):", anchor="w", bg=themeColor,fg='white').grid(row=caliberRow)
 accuracyEntry = tk.Entry(top)
 shotsEntry = tk.Entry(top)
+heatEntry = tk.Entry(top)
+caliberEntry = tk.Entry(top)
 accuracyEntry.insert(0, PyShoot.ACCURACY);
 shotsEntry.insert(0, PyShoot.MIN_SHOTS);
+heatEntry.insert(0, PyShoot.HEAT_LITZ);
+caliberEntry.insert(0, PyShoot.CALIBER);
 
-accuracyEntry.grid(row=0, column=1)
-shotsEntry.grid(row=1, column=1)
-
+accuracyEntry.grid(row=accuracyRow, column=1)
+shotsEntry.grid(row=shotsRow, column=1)
+heatEntry.grid(row=heatRow, column=1)
+caliberEntry.grid(row=caliberRow, column=1)
 top.mainloop()

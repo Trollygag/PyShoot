@@ -35,6 +35,9 @@ SCALE = 8 # MOA
 # with large sample sizes. 
 HEAT = 0.00
 
+# Litz measured a heat affect of 0.0067 in MALRS2
+HEAT_LITZ = 0.0067
+
 # This is a correction to accuracy so that the normal distribution produces the mean
 ACCURACY_CORRECTION=3.0625
 
@@ -50,10 +53,10 @@ class ESParameters:
 
 # This function just generates groups
 def generateGroup(accuracy, shotcount, heat, scale):
-    #print("Group Generation with params: " + format(accuracy, '.2f') + " MOA, " + format(shotcount) + " shots, heat: " + format(heat) + ", scale: " + format(scale))
+    print("Group Generation with params: " + format(accuracy, '.2f') + " MOA, " + format(shotcount) + " shots, heat: " + format(heat) + ", scale: " + format(scale))
     hitsList = []
     for shot in range(shotcount):
-        hitsList.append(np.random.normal(scale/2, ((accuracy+(heat)*shot)/ACCURACY_CORRECTION),2))
+        hitsList.append(np.random.normal(scale/2, ((accuracy+(heat*shot))/ACCURACY_CORRECTION),2))
     return hitsList
 
 # Calculate max polygon diameter. I don't know how to code a rotating calipers algorithm
@@ -111,7 +114,6 @@ def drawTarget(hitsList, hull, esParams, scale, caliber):
 
     # Draw connectors for the convex hull
     for simplex in hull.simplices:
-        print(simplex)
         plt.plot(hull.points[simplex,0], hull.points[simplex,1], 'k-', color='dimgray')
 
     # Draw line between the points of the max diameter
@@ -127,18 +129,23 @@ def drawTarget(hitsList, hull, esParams, scale, caliber):
     plt.title(titleStr)
 
     # Draw
-    plt.show()
+   # plt.show()
 
     #Done
 
-def pyshootlite(accuracy, number):
+def show():
+    plt.show()
+
+def pyshootlite(accuracy, number,heat,caliber):
     if accuracy > 3:
         SCALE = round(accuracy*3)
     else:
         SCALE = 8
     validateAccuracy(accuracy)
     validateNumShots(number)
-    pyshoot(accuracy, number, HEAT, SCALE, CALIBER)
+    validateHeat(heat)
+    validateCaliber(caliber)
+    pyshoot(accuracy, number, heat, SCALE, caliber)
 
 def pyshootCalculate(accuracy, number):
     if accuracy > 3:
@@ -189,11 +196,17 @@ def check_float_range(val, min_val=None, max_val=None):
         raise exc
     return fval
 
+def validateHeat(heat):
+    return check_float_range(heat, min_val=0)
+
 def validateAccuracy(accuracy):
     return check_float_range(accuracy, min_val=0)
 
 def validateNumShots(number) :
     return check_int_range(number, min_val=MIN_SHOTS - 1, max_val=MAX_SHOTS + 1)
+
+def validateCaliber(caliber):
+    return check_float_range(caliber, min_val=LOWER_CAL, max_val=UPPER_CAL)
 
 def main():
     """Main function for PyShoot."""
@@ -232,6 +245,7 @@ def main():
     args = parser.parse_args()
 
     pyshoot(args.accuracy, args.number, args.heat, args.scale, args.caliber)
+    show()
 
 if __name__ == '__main__':
     main()

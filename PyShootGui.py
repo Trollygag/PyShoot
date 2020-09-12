@@ -4,11 +4,13 @@ from tkinter import *
 import PyShoot
 
 themeColor='navy'
+maxTests=10000
+totalTests=0
 top = tk.Tk()
 top.configure(bg=themeColor)
 top.minsize(100,100)
 
-DEBUG_MODE=True
+DEBUG_MODE=False
 
 
 # Kick off the PyShoot diagram
@@ -18,22 +20,49 @@ def callback():
     if accuracy and shots:
         PyShoot.pyshootlite(float(accuracy),int(shots))
 
+# Displays the debug menu
+def displayDebug():
+    # Set up Debug
+    debugStartRow = buttonRow+1
+    debugButtonRow = debugStartRow+1
+    infoLabel = tk.Label(top, text="Debug Zone: Calibrated against 5 shots", anchor="w", bg=themeColor,fg='white').grid(row=debugStartRow, columnspan=2)
+
+    calcMOAVariable = StringVar()
+    expMOAVariable = StringVar()
+    calcMOAVariable.set("")
+    expMOAVariable.set("")
+    testSliderRow=debugButtonRow+1
+    calcedRow=testSliderRow+1
+    expectedRow=calcedRow+1
+    calcLabel = tk.Label(top, text="Calc MOA: ", anchor="w", bg=themeColor,fg='white').grid(row=calcedRow, column=0)
+    calcResLabel = tk.Label(top, textvariable=calcMOAVariable, anchor="w", bg=themeColor,fg='white').grid(row=calcedRow, column=1)
+    expLabel = tk.Label(top, text="Expect MOA: ", anchor="w", bg=themeColor,fg='white').grid(row=expectedRow, column=0)
+    expMOALabel = tk.Label(top, textvariable=expMOAVariable, anchor="w", bg=themeColor,fg='white').grid(row=expectedRow, column=1)
+    totalTestSlider = tk.Scale(top, from_=1, to=maxTests, orient=HORIZONTAL, bg=themeColor,fg='white')
+    totalTestSlider.grid(row=testSliderRow, columnspan=2)
+    totalTestSlider.set(maxTests)
+    debugStartButton = tk.Button(top, text="Debug Start", command= lambda: debug(totalTestSlider,calcMOAVariable,expMOAVariable), bg='red', fg='white').grid(row=debugButtonRow,columnspan=2)
+
 # Kick off the debug mode
-def debug():
+def debug(totalTestSlider,calcMOAVariable,expMOAVariable):
     accuracy=accuracyEntry.get()
     shots=shotsEntry.get()
     if accuracy and shots:
-        totalTests = 10000
+        totalTests = totalTestSlider.get()
         totalResult = 0
         for i in range(totalTests):
             totalResult += PyShoot.pyshootCalculate(float(accuracy),int(shots))
         calcMOAVariable.set(format((totalResult / totalTests), '.2f'))
         expMOAVariable.set(accuracy)
-
+        
 # Set up GUI
-button = tk.Button(top, text="Pyshoot", command=callback, bg='black', fg='white').grid(row=3,column=0)
-tk.Label(top, text="Accuracy (MOA):", anchor="w", bg=themeColor,fg='white').grid(row=0)
-tk.Label(top, text="Shots:", anchor="w", bg=themeColor,fg='white').grid(row=1)
+accuracyRow = 0
+shotsRow = accuracyRow + 1
+buttonRow = shotsRow + 1
+button = tk.Button(top, text="Pyshoot", command=callback, bg='black', fg='white').grid(row=buttonRow,column=0)
+debugButton = tk.Button(top, text="Debug", command=displayDebug, bg='black', fg='white').grid(row=buttonRow,column=1)
+tk.Label(top, text="Accuracy (MOA):", anchor="w", bg=themeColor,fg='white').grid(row=accuracyRow)
+tk.Label(top, text="Shots:", anchor="w", bg=themeColor,fg='white').grid(row=shotsRow)
 accuracyEntry = tk.Entry(top)
 shotsEntry = tk.Entry(top)
 accuracyEntry.insert(0, PyShoot.ACCURACY);
@@ -41,18 +70,5 @@ shotsEntry.insert(0, PyShoot.MIN_SHOTS);
 
 accuracyEntry.grid(row=0, column=1)
 shotsEntry.grid(row=1, column=1)
-
-if DEBUG_MODE:
-    # Set up Debug
-    debugButton = tk.Button(top, text="Debug", command=debug, bg='red', fg='white').grid(row=3,column=1)
-    calcMOAVariable = StringVar()
-    expMOAVariable = StringVar()
-    calcMOAVariable.set("")
-    expMOAVariable.set("")
-    calcLabel = tk.Label(top, text="Calc MOA: ", anchor="w", bg=themeColor,fg='white').grid(row=4, column=0)
-    calcResLabel = tk.Label(top, textvariable=calcMOAVariable, anchor="w", bg=themeColor,fg='white').grid(row=4, column=1)
-    expLabel = tk.Label(top, text="Expect MOA: ", anchor="w", bg=themeColor,fg='white').grid(row=5, column=0)
-    expMOALabel = tk.Label(top, textvariable=expMOAVariable, anchor="w", bg=themeColor,fg='white').grid(row=5, column=1)
-
 
 top.mainloop()

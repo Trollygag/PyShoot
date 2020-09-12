@@ -2,9 +2,13 @@
 import tkinter as tk
 from tkinter import *
 import PyShoot
-top = tk.Tk()
 
-DEBUG_MODE=False
+themeColor='navy'
+top = tk.Tk()
+top.configure(bg=themeColor)
+top.minsize(100,100)
+
+DEBUG_MODE=True
 
 
 # Kick off the PyShoot diagram
@@ -27,9 +31,9 @@ def debug():
         expMOAVariable.set(accuracy)
 
 # Set up GUI
-button = tk.Button(top, text="Pyshoot", command=callback).grid(row=3,column=0)
-tk.Label(top, text="Accuracy (MOA):", anchor="w").grid(row=0)
-tk.Label(top, text="Shots:", anchor="w").grid(row=1)
+button = tk.Button(top, text="Pyshoot", command=callback, bg='black', fg='white').grid(row=3,column=0)
+tk.Label(top, text="Accuracy (MOA):", anchor="w", bg=themeColor,fg='white').grid(row=0)
+tk.Label(top, text="Shots:", anchor="w", bg=themeColor,fg='white').grid(row=1)
 accuracyEntry = tk.Entry(top)
 shotsEntry = tk.Entry(top)
 accuracyEntry.insert(0, PyShoot.ACCURACY);
@@ -40,15 +44,15 @@ shotsEntry.grid(row=1, column=1)
 
 if DEBUG_MODE:
     # Set up Debug
-    debugButton = tk.Button(top, text="Debug", command=debug).grid(row=3,column=1)
+    debugButton = tk.Button(top, text="Debug", command=debug, bg='red', fg='white').grid(row=3,column=1)
     calcMOAVariable = StringVar()
     expMOAVariable = StringVar()
     calcMOAVariable.set("")
     expMOAVariable.set("")
-    calcLabel = tk.Label(top, text="Calc MOA: ", anchor="w").grid(row=4, column=0)
-    calcResLabel = tk.Label(top, textvariable=calcMOAVariable, anchor="w").grid(row=4, column=1)
-    expLabel = tk.Label(top, text="Expect MOA: ", anchor="w").grid(row=5, column=0)
-    expMOALabel = tk.Label(top, textvariable=expMOAVariable, anchor="w").grid(row=5, column=1)
+    calcLabel = tk.Label(top, text="Calc MOA: ", anchor="w", bg=themeColor,fg='white').grid(row=4, column=0)
+    calcResLabel = tk.Label(top, textvariable=calcMOAVariable, anchor="w", bg=themeColor,fg='white').grid(row=4, column=1)
+    expLabel = tk.Label(top, text="Expect MOA: ", anchor="w", bg=themeColor,fg='white').grid(row=5, column=0)
+    expMOALabel = tk.Label(top, textvariable=expMOAVariable, anchor="w", bg=themeColor,fg='white').grid(row=5, column=1)
 
 
 top.mainloop()

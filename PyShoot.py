@@ -36,7 +36,7 @@ SCALE = 8 # MOA
 HEAT = 0.00
 
 # This is a correction to accuracy so that the normal distribution produces the mean
-ACCURACY_CORRECTION=3.125
+ACCURACY_CORRECTION=3.0625
 
 # This stores the max ES and the coordinates from the lines carrying them.
 class ESParameters:
@@ -50,9 +50,10 @@ class ESParameters:
 
 # This function just generates groups
 def generateGroup(accuracy, shotcount, heat, scale):
+    #print("Group Generation with params: " + format(accuracy, '.2f') + " MOA, " + format(shotcount) + " shots, heat: " + format(heat) + ", scale: " + format(scale))
     hitsList = []
     for shot in range(shotcount):
-            hitsList.append(np.random.normal(scale/2, ((accuracy+(heat)*shot)/ACCURACY_CORRECTION),2))
+        hitsList.append(np.random.normal(scale/2, ((accuracy+(heat)*shot)/ACCURACY_CORRECTION),2))
     return hitsList
 
 # Calculate max polygon diameter. I don't know how to code a rotating calipers algorithm
@@ -87,7 +88,7 @@ def drawTarget(hitsList, hull, esParams, scale, caliber):
 
     # This function just draws dots
     def drawHits(ax) :
-        for shot in range(1,len(hitsList)):
+        for shot in range(0,len(hitsList)):
             circle = plt.Circle(hitsList[shot], caliber/2, color=colors[shot%colorsize])
             ax.add_artist(circle)
         return ax
@@ -130,7 +131,28 @@ def drawTarget(hitsList, hull, esParams, scale, caliber):
 
     #Done
 
+def pyshootlite(accuracy, number):
+    if accuracy > 3:
+        SCALE = round(accuracy*3)
+    else:
+        SCALE = 8
+    validateAccuracy(accuracy)
+    validateNumShots(number)
+    pyshoot(accuracy, number, HEAT, SCALE, CALIBER)
 
+def pyshootCalculate(accuracy, number):
+    if accuracy > 3:
+        SCALE = round(accuracy*3)
+    else:
+        SCALE = 8
+    validateAccuracy(accuracy)
+    validateNumShots(number)
+    hitsList = generateGroup(accuracy, number, HEAT, SCALE)
+    # Calculate convex hull (polygon that captures the outside of the hits)
+    hull=ConvexHull(hitsList)
+    esParams = calculateES(hull)
+    return esParams.es
+            
 def pyshoot(accuracy, number, heat, scale, caliber) :
     hitsList = generateGroup(accuracy, number, heat, scale)
     # Calculate convex hull (polygon that captures the outside of the hits)
@@ -167,6 +189,11 @@ def check_float_range(val, min_val=None, max_val=None):
         raise exc
     return fval
 
+def validateAccuracy(accuracy):
+    return check_float_range(accuracy, min_val=0)
+
+def validateNumShots(number) :
+    return check_int_range(number, min_val=MIN_SHOTS - 1, max_val=MAX_SHOTS + 1)
 
 def main():
     """Main function for PyShoot."""
@@ -174,13 +201,13 @@ def main():
     parser.add_argument(
         '-a',
         '--accuracy',
-        type=functools.partial(check_float_range, min_val=0),
+        type=functools.partial(validateAccuracy),
         default=ACCURACY,
         help='accuracy in MOA (default: %s min: %s)' % (ACCURACY, 0.1))
     parser.add_argument(
         '-n',
         '--number',
-        type=functools.partial(check_int_range, min_val=MIN_SHOTS - 1, max_val=MAX_SHOTS + 1),
+        type=functools.partial(validateNumShots),
         default=SHOT_COUNT,
         help='number of shots in the group (default: %s min: %s max: %s)' % (SHOT_COUNT, MIN_SHOTS, MAX_SHOTS))
     parser.add_argument(

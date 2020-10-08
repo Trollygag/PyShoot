@@ -92,12 +92,11 @@ def drawTarget(hitsList, hull, esParams, scale, caliber):
     # This function just draws dots
     def drawHits(ax) :
         for shot in range(0,len(hitsList)):
+            print(hitsList[shot])
             circle = plt.Circle(hitsList[shot], caliber/2, color=colors[shot%colorsize])
             ax.add_artist(circle)
         return ax
        
-    # Main
-    # Setup
     fig, ax = plt.subplots() # note we must use plt.subplots, not plt.subplot
 
     # Draw target dot
@@ -127,11 +126,6 @@ def drawTarget(hitsList, hull, esParams, scale, caliber):
     # Set title with the MOA calculation of polygon distance
     titleStr="Dispersion: "+format(esParams.es, '.2f')+" MOA C-C"
     plt.title(titleStr)
-
-    # Draw
-   # plt.show()
-
-    #Done
 
 def show():
     plt.show()

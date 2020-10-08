@@ -3,6 +3,7 @@ import tkinter as tk
 import threading
 from tkinter import *
 import PyShoot
+import HitAnalysis
 
 themeColor='navy'
 maxTests=10000
@@ -84,6 +85,7 @@ def hitrate():
         debugButtonRow = debugStartRow+1
         infoLabel = tk.Label(hitFrame, text="Hitrate Zone:", anchor="w", bg=themeColor,fg='white').grid(sticky='w',row=debugStartRow, columnspan=2)
         hitFrame.grid()
+        HitAnalysis.hitAnalysis()
     else:
         showHitModeNext=True
         hitFrame.grid_remove()

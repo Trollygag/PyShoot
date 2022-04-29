@@ -185,9 +185,9 @@ def displayHitrate():
         targetSizeEntry    = tk.Entry(hitFrame)
         windErrorEntry     = tk.Entry(hitFrame)
         velocityErrorEntry = tk.Entry(hitFrame)
-        targetSizeEntry.insert(0,"1")
-        windErrorEntry.insert(0,"1")
-        velocityErrorEntry.insert(0,"1")
+        targetSizeEntry.insert(0,"2")
+        windErrorEntry.insert(0,".75")
+        velocityErrorEntry.insert(0,".2")
 
         # 4 Description labels, one for each input, one for final display
         targetSizeLabel    = StringVar()
@@ -244,7 +244,6 @@ def displayHitrate():
                                             sticky='w',row=goButtonRow,column=2)
         
         hitFrame.grid()
-        #HitAnalysis.hitAnalysis()
     else:
         showHitModeNext = True
         hitFrame.grid_remove()
@@ -257,11 +256,12 @@ def hitAnalysisGuiFn(
     targetSize = float(targetSizeEntry.get())
     windErr = float(windErrorEntry.get())
     velocityErr = float(velocityErrorEntry.get())
-
+    hitrateVariable.set("Done!")
     accuracy = accuracyEntry.get()
     if accuracy and float(accuracy) > 0.01:
-        hitrateVariable.set(HitAnalysis.hitAnalysis(float(accuracy),targetSize,windErr,velocityErr,1))
-    
+        hitRate = HitAnalysis.hitAnalysis(float(accuracy),targetSize,windErr,velocityErr,1)
+        hitrateVariable.set("%s%%"%int(hitRate))
+
 
 
 entryspan = 2

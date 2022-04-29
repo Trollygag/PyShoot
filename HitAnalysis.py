@@ -92,7 +92,7 @@ def drawShots(hitsList, missesList, targetSize):
     plt.title(titleStr)
 
     # Draw
-    plt.show()
+    plt.show(block=False)
     
 def hitAnalysis(accuracy=1, targetSize=2, windErrorReading=2, velocitySD=15, windResistance=6.5):
     

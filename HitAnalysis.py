@@ -41,7 +41,7 @@ def calculateMisses(shots, targetSize):
 def calculateHitsRatio(hits, shots):
     return len(hits)/len(shots)
 
-def drawShots(hitsList, shotsList, targetSize):
+def drawShots(hitsList, missesList, targetSize):
     scale=targetSize*5
     # This function just draws dots
     def drawHits(ax) :
@@ -50,9 +50,9 @@ def drawShots(hitsList, shotsList, targetSize):
 ##            print(hitsList[shot])
                 circle = plt.Circle((hitsList[shot][0]+(scale/2), hitsList[shot][1]+(scale/2)), SHOTSIZE, color='g')
                 ax.add_artist(circle)
-        for shot in range(0,len(shotsList)):
+        for shot in range(0,len(missesList)):
             if shot % DOWNSELECT == 0:
-                circle = plt.Circle((shotsList[shot][0]+(scale/2), shotsList[shot][1]+(scale/2)), SHOTSIZE, color='r')
+                circle = plt.Circle((missesList[shot][0]+(scale/2), missesList[shot][1]+(scale/2)), SHOTSIZE, color='r')
                 ax.add_artist(circle)
         return ax
        

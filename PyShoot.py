@@ -53,7 +53,7 @@ class ESParameters:
 
 # This function just generates groups
 def generateGroup(accuracy, shotcount, heat, scale):
-    print("Group Generation with params: " + format(accuracy, '.2f') + " MOA, " + format(shotcount) + " shots, heat: " + format(heat) + ", scale: " + format(scale))
+    #print("Group Generation with params: " + format(accuracy, '.2f') + " MOA, " + format(shotcount) + " shots, heat: " + format(heat) + ", scale: " + format(scale))
     hitsList = []
     for shot in range(shotcount):
         hitsList.append(np.random.normal(scale/2, ((accuracy+(heat*shot))/ACCURACY_CORRECTION),2))

@@ -17,13 +17,13 @@ showHitModeNext=True
 
 # Kick off the PyShoot diagram
 def callback():
-    
+
     accuracy = accuracyEntry.get()
-    shots    = shotsEntry.get()
+    shots    = shotsEntry.get()    
     heat     = heatEntry.get()
     caliber  = caliberEntry.get()
-    
-    if accuracy and shots and heat and caliber and int(shots) > 2 and float(accuracy) >= 0.01:
+    print("accuracy %s, shots %s, caliber %s"%(accuracy, shots, caliber))
+    if heat and caliber and validateEntries(accuracy, shots):
         for i in range(0, int(totalTestSlider.get())) :
             PyShoot.pyshootlite(
                 float(accuracy), int(shots),
@@ -35,14 +35,21 @@ def callback():
 # Set the entries to defaults
 def resetEntries():
     accuracyEntry.delete(0, END)
-    accuracyEntry.insert(0, PyShoot.ACCURACY);
+    accuracyEntry.insert(0, PyShoot.ACCURACY)
     shotsEntry.delete(0, END)
-    shotsEntry.insert(0, PyShoot.MIN_SHOTS);
+    shotsEntry.insert(0, PyShoot.MIN_SHOTS)
     heatEntry.delete(0, END)
-    heatEntry.insert(0, PyShoot.HEAT_LITZ);
+    heatEntry.insert(0, PyShoot.HEAT_LITZ)
     caliberEntry.delete(0,END)
-    caliberEntry.insert(0, PyShoot.CALIBER);
+    caliberEntry.insert(0, PyShoot.CALIBER)
 
+# Validate the input fields and reset if they are bunk
+def validateEntries(accuracy, shots):
+    isValid = accuracy and shots and int(shots) > 2 and float(accuracy) >= 0.01
+    if not isValid:
+        resetEntries()
+    return isValid
+    
 # Displays the debug menu
 def displayDebug():
     # Set up Debug
@@ -62,7 +69,7 @@ def displayDebug():
 
         calcMOAVariable  = StringVar()
         expMOAVariable   = StringVar()
-        minMOAVariable  = StringVar()
+        minMOAVariable   = StringVar()
         maxMOAVariable   = StringVar()
         calcMOAVariable.set("")
         expMOAVariable.set("")
@@ -71,8 +78,8 @@ def displayDebug():
         testSliderRow    = debugButtonRow+1
         calcedRow        = testSliderRow+1
         expectedRow      = calcedRow+1
-        minRow      = expectedRow+1
-        maxRow      = minRow+1
+        minRow           = expectedRow+1
+        maxRow           = minRow+1
         
         calcLabel  = tk.Label(debugFrame, text="Calc MOA: ",
                               anchor="w", bg=themeColor,fg='white').grid(
@@ -130,10 +137,13 @@ def displayDebug():
     
 
 # Kick off the debug mode
-def debug(totalTestSlider, calcMOAVariable, expMOAVariable, minMOAVariable, maxMOAVariable):
+def debug(totalTestSlider, calcMOAVariable,
+          expMOAVariable, minMOAVariable, maxMOAVariable):
+    
     accuracy = accuracyEntry.get()
     shots    = shotsEntry.get()
-    if accuracy and shots and float(accuracy) >= 0.01 and int(shots) > 2:
+    
+    if validateEntries(accuracy, shots):
         totalTests  = totalTestSlider.get()
         totalResult = 0
         minResult = 100000
@@ -153,7 +163,7 @@ def debug(totalTestSlider, calcMOAVariable, expMOAVariable, minMOAVariable, maxM
         resetEntries()
 
 # Kick off the hitratecomparator
-def hitrate():
+def displayHitrate():
     global showDebugModeNext
     global showHitModeNext
     
@@ -167,11 +177,92 @@ def hitrate():
         infoLabel = tk.Label(hitFrame, text="Hitrate Zone:", anchor="w",
                              bg=themeColor,fg='white').grid(
                                  sticky='w',row=debugStartRow, columnspan=2)
+
+        # This interface should allow you to input the size of the target,
+        # your wind reading error, and your velocity error.
+
+        # 3 Input fields
+        targetSizeEntry    = tk.Entry(hitFrame)
+        windErrorEntry     = tk.Entry(hitFrame)
+        velocityErrorEntry = tk.Entry(hitFrame)
+        targetSizeEntry.insert(0,"1")
+        windErrorEntry.insert(0,"1")
+        velocityErrorEntry.insert(0,"1")
+
+        # 4 Description labels, one for each input, one for final display
+        targetSizeLabel    = StringVar()
+        windErrorLabel     = StringVar()
+        velocityErrorLabel = StringVar()
+        hitrateVariable    = StringVar()
+   
+        # 5 rows
+        targetRow    = debugButtonRow+1
+        windEntryRow = targetRow+1
+        velRow       = windEntryRow+1
+        hitRateRow   = velRow+1
+        goButtonRow  = hitRateRow+1
+
+        
+        targetLabel  = tk.Label(hitFrame, text="Target MOA: ",
+                              anchor="w", bg=themeColor,fg='white').grid(
+                                  sticky='w',row=targetRow, column=0)
+
+        targetSizeEntry.grid(
+            row=targetRow, column=1,columnspan=entryspan)
+                                
+        windLabel  = tk.Label(hitFrame, text="Wind Err MOA: ",
+                             anchor="w",bg=themeColor,fg='white').grid(
+                                 sticky='w',row=windEntryRow, column=0)
+                                
+        windErrorEntry.grid(
+            row=windEntryRow, column=1,columnspan=entryspan)
+
+        velocityErrorLabel = tk.Label(hitFrame, text="Velocity Err MOA: ",
+                              anchor="w", bg=themeColor,fg='white').grid(
+                                  sticky='w',row=velRow, column=0)
+
+        velocityErrorEntry.grid(
+            row=velRow, column=1,columnspan=entryspan)
+        
+        hitrateLabel  = tk.Label(hitFrame, text="Hitrate: ",
+                              anchor="w", bg=themeColor,fg='white').grid(
+                                  sticky='w',row=hitRateRow, column=0)
+                               
+        hitrateResLabel = tk.Label(hitFrame, textvariable=hitrateVariable,
+                                anchor="w", bg=themeColor,fg='white').grid(
+                                    sticky='w',row=hitRateRow, column=1)
+                                   
+
+        # 1 additional button
+        hitrateLaunchButton = tk.Button(hitFrame, text="Go",
+                                        command= lambda: hitAnalysisGuiFn(
+                                         targetSizeEntry,
+                                         windErrorEntry,
+                                         velocityErrorEntry,
+                                         hitrateVariable),
+                                        bg='black', fg='white').grid(
+                                            sticky='w',row=goButtonRow,column=2)
+        
         hitFrame.grid()
-        HitAnalysis.hitAnalysis()
+        #HitAnalysis.hitAnalysis()
     else:
         showHitModeNext = True
         hitFrame.grid_remove()
+
+def hitAnalysisGuiFn(
+    targetSizeEntry,
+    windErrorEntry,
+    velocityErrorEntry,
+    hitrateVariable):
+    targetSize = float(targetSizeEntry.get())
+    windErr = float(windErrorEntry.get())
+    velocityErr = float(velocityErrorEntry.get())
+
+    accuracy = accuracyEntry.get()
+    if accuracy and float(accuracy) > 0.01:
+        hitrateVariable.set(HitAnalysis.hitAnalysis(float(accuracy),targetSize,windErr,velocityErr,1))
+    
+
 
 entryspan = 2
 # Set up row layout
@@ -203,7 +294,7 @@ totalTestSlider.set(1)
 # Main section
 button        = tk.Button(buttonFrame, text="Pyshoot", command=callback, bg='black', fg='white').grid(sticky='w',row=buttonRow,column=0)
 debugButton   = tk.Button(buttonFrame, text="Debug", command=displayDebug, bg='black', fg='white').grid(sticky='w',row=buttonRow,column=1)
-hitrateButton = tk.Button(buttonFrame, text="HitRate", command=hitrate, bg='black', fg='white').grid(sticky='w',row=buttonRow,column=2)
+hitrateButton = tk.Button(buttonFrame, text="HitRate", command=displayHitrate, bg='black', fg='white').grid(sticky='w',row=buttonRow,column=2)
 
 tk.Label(top, text="Accuracy (MOA):", anchor="w", bg=themeColor,fg='white').grid(sticky='w',row=accuracyRow)
 tk.Label(top, text="Shots:", anchor='w', bg=themeColor,fg='white').grid(sticky='w',row=shotsRow)
@@ -221,6 +312,7 @@ accuracyEntry.grid(row=accuracyRow, column=1,columnspan=entryspan)
 shotsEntry.grid(row=shotsRow, column=1,columnspan=entryspan)
 heatEntry.grid(row=heatRow, column=1,columnspan=entryspan)
 caliberEntry.grid(row=caliberRow, column=1,columnspan=entryspan)
+
 
 top.iconbitmap('PyShootGui.ico')
 top.title("PyShoot")

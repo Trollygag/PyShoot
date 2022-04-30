@@ -114,10 +114,10 @@ def displayDebug():
                                    sticky='w',row=maxRow, column=1)
         
         totalTestSlider  = tk.Scale(debugFrame, from_=1, to=maxTests,
-                                    orient=HORIZONTAL,
+                                    orient=HORIZONTAL, length=200,
                                     bg=themeColor,fg='white')
         
-        totalTestSlider.grid(row=testSliderRow, columnspan=2)
+        totalTestSlider.grid(row=testSliderRow, columnspan=3)
         totalTestSlider.set(maxTests)
         
         debugStartButton = tk.Button(debugFrame, text="Debug Start",

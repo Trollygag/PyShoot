@@ -148,6 +148,9 @@ def debug(totalTestSlider, calcMOAVariable,
         totalResult = 0
         minResult = 100000
         maxResult = 0
+        
+        PyShoot.printProfilerTime("Starting Debug Commands")
+        
         for i in range(totalTests):
             result = PyShoot.pyshootCalculate(
                 float(accuracy),int(shots))
@@ -155,6 +158,8 @@ def debug(totalTestSlider, calcMOAVariable,
             minResult = min(minResult, result)
             maxResult = max(maxResult, result)
             
+        PyShoot.printProfilerTime("Finishing Debug Commands")
+        
         calcMOAVariable.set(format((totalResult / totalTests), '.2f'))
         expMOAVariable.set(accuracy)
         minMOAVariable.set(minResult)

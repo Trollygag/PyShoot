@@ -8,6 +8,7 @@ import functools
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import ConvexHull
+from datetime import datetime
 
 
 # Application bounds
@@ -59,6 +60,12 @@ def generateGroup(accuracy, shotcount, heat, scale):
         hitsList.append(np.random.normal(scale/2, ((accuracy+(heat*shot))/ACCURACY_CORRECTION),2))
     return hitsList
 
+# Small rofiler to help take measurements
+def printProfilerTime(timeStr):
+    now = datetime.now()
+    now.strftime("%H:%M:%S.%f")
+    print("%s time: %s"%(timeStr, now))
+    
 # Calculate max polygon diameter. I don't know how to code a rotating calipers algorithm
 # so for now, I'm just brute forcing this.
 def calculateES(hull) :
@@ -67,6 +74,7 @@ def calculateES(hull) :
     exp2 = 0
     eyp1 = 0
     eyp2 = 0
+    
     for idx in range(len(hull.vertices)):
         for idx2 in range(idx+1,len(hull.vertices)):
             xp1 = hull.points[hull.vertices[idx],0]
@@ -82,6 +90,7 @@ def calculateES(hull) :
                 exp2=xp2
                 eyp1=yp1
                 eyp2=yp2
+
     return ESParameters(maxLength, exp1, exp2, eyp1, eyp2)
 
 def drawTarget(hitsList, hull, esParams, scale, caliber):
@@ -92,7 +101,6 @@ def drawTarget(hitsList, hull, esParams, scale, caliber):
     # This function just draws dots
     def drawHits(ax) :
         for shot in range(0,len(hitsList)):
-            print(hitsList[shot])
             circle = plt.Circle(hitsList[shot], caliber/2, color=colors[shot%colorsize])
             ax.add_artist(circle)
         return ax
@@ -155,10 +163,12 @@ def pyshootCalculate(accuracy, number):
     return esParams.es
             
 def pyshoot(accuracy, number, heat, scale, caliber) :
+    printProfilerTime("Start Pyshoot Generation/Calc")
     hitsList = generateGroup(accuracy, number, heat, scale)
     # Calculate convex hull (polygon that captures the outside of the hits)
     hull=ConvexHull(hitsList)
     esParams = calculateES(hull)
+    printProfilerTime("End Pyshoot Generation/Calc")
     drawTarget(hitsList, hull, esParams, scale, caliber)
 
 def check_int_range(val, min_val=None, max_val=None):

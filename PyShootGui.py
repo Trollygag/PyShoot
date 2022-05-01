@@ -22,7 +22,9 @@ def callback():
     shots    = shotsEntry.get()    
     heat     = heatEntry.get()
     caliber  = caliberEntry.get()
+    
     print("accuracy %s, shots %s, caliber %s"%(accuracy, shots, caliber))
+    
     if heat and caliber and validateEntries(accuracy, shots):
         for i in range(0, int(totalTestSlider.get())) :
             PyShoot.pyshootlite(
@@ -57,15 +59,17 @@ def displayDebug():
     global showDebugModeNext
     global showHitModeNext
     showHitModeNext=True
+    
     if(showDebugModeNext == True):
         showDebugModeNext=False
         hitFrame.grid_remove()
-        debugButtonRow = debugStartRow+1
+        
         infoLabel = tk.Label(debugFrame,
                              text="Debug Zone: Calibrated against 5 shots",
                              anchor="w",
                              bg=themeColor,fg='white').grid(
                                  sticky='w',row=debugStartRow, columnspan=2)
+
 
         calcMOAVariable  = StringVar()
         expMOAVariable   = StringVar()
@@ -75,11 +79,12 @@ def displayDebug():
         expMOAVariable.set("")
         minMOAVariable.set("")
         maxMOAVariable.set("")
-        testSliderRow    = debugButtonRow+1
+        testSliderRow    = debugStartRow+1
         calcedRow        = testSliderRow+1
         expectedRow      = calcedRow+1
         minRow           = expectedRow+1
         maxRow           = minRow+1
+        debugButtonRow   = maxRow+1
         
         calcLabel  = tk.Label(debugFrame, text="Calc MOA: ",
                               anchor="w", bg=themeColor,fg='white').grid(
@@ -118,7 +123,8 @@ def displayDebug():
                                     bg=themeColor,fg='white')
         
         totalTestSlider.grid(row=testSliderRow, columnspan=3)
-        totalTestSlider.set(maxTests)
+        totalTestSlider.set(1)
+        
         
         debugStartButton = tk.Button(debugFrame, text="Debug Start",
                                      command= lambda: debug(
@@ -146,7 +152,8 @@ def debug(totalTestSlider, calcMOAVariable,
     if validateEntries(accuracy, shots):
         totalTests  = totalTestSlider.get()
         totalResult = 0
-        minResult = 100000
+        
+        minResult = sys.maxsize
         maxResult = 0
         
         PyShoot.printProfilerTime("Starting Debug Commands")
@@ -178,8 +185,8 @@ def displayHitrate():
         showHitModeNext = False
         debugFrame.grid_remove()
         debugStartRow  = buttonRow+1
-        debugButtonRow = debugStartRow+1
-        infoLabel = tk.Label(hitFrame, text="Hitrate Zone:", anchor="w",
+        
+        infoLabel = tk.Label(hitFrame, text="=========Hit Rate Zone=========", anchor="w",
                              bg=themeColor,fg='white').grid(
                                  sticky='w',row=debugStartRow, columnspan=2)
 
@@ -201,12 +208,11 @@ def displayHitrate():
         hitrateVariable    = StringVar()
    
         # 5 rows
-        targetRow    = debugButtonRow+1
+        targetRow    = debugStartRow+1
         windEntryRow = targetRow+1
         velRow       = windEntryRow+1
         hitRateRow   = velRow+1
-        goButtonRow  = hitRateRow+1
-
+        goButtonRow = hitRateRow+1
         
         targetLabel  = tk.Label(hitFrame, text="Target MOA: ",
                               anchor="w", bg=themeColor,fg='white').grid(
@@ -239,14 +245,14 @@ def displayHitrate():
                                    
 
         # 1 additional button
-        hitrateLaunchButton = tk.Button(hitFrame, text="Go",
+        hitrateLaunchButton = tk.Button(hitFrame, text="Hit Rate",
                                         command= lambda: hitAnalysisGuiFn(
                                          targetSizeEntry,
                                          windErrorEntry,
                                          velocityErrorEntry,
                                          hitrateVariable),
-                                        bg='black', fg='white').grid(
-                                            sticky='w',row=goButtonRow,column=2)
+                                        bg='red', fg='white').grid(
+                                            row=goButtonRow,columnspan=2)
         
         hitFrame.grid()
     else:
@@ -258,18 +264,24 @@ def hitAnalysisGuiFn(
     windErrorEntry,
     velocityErrorEntry,
     hitrateVariable):
-    targetSize = float(targetSizeEntry.get())
-    windErr = float(windErrorEntry.get())
+    
+    targetSize  = float(targetSizeEntry.get())
+    windErr     = float(windErrorEntry.get())
     velocityErr = float(velocityErrorEntry.get())
-    hitrateVariable.set("Done!")
+       
     accuracy = accuracyEntry.get()
+    
     if accuracy and float(accuracy) > 0.01:
         hitRate = HitAnalysis.hitAnalysis(float(accuracy),targetSize,windErr,velocityErr,1)
         hitrateVariable.set("%s%%"%int(hitRate))
 
-
+def displayAbout():
+    print("Displaying About")
+def displayUsage():
+    print("Displaying usage")
 
 entryspan = 2
+
 # Set up row layout
 accuracyRow   = 0
 shotsRow      = accuracyRow + 1
@@ -278,7 +290,8 @@ caliberRow    = heatRow + 1
 inputRow      = caliberRow
 testSampleRow = inputRow + 1
 buttonRow     = testSampleRow + 1
-debugStartRow = buttonRow + 1
+secondButtonRow = buttonRow + 1
+debugStartRow = secondButtonRow + 1
 
 # Expanded frames
 debugFrame  = tk.Frame(top,bg=themeColor)
@@ -292,15 +305,14 @@ buttonFrame.grid(row=buttonRow, columnspan=3)
 
 # Trials section
 tk.Label(top, text="Number Trials:", anchor="w", bg=themeColor,fg='white').grid(sticky='w',row=testSampleRow, column=0)
-totalTestSlider = tk.Scale(top, from_=1, to=20, orient=HORIZONTAL, bg=themeColor,fg='white')
+totalTestSlider = tk.Scale(top, from_=1, to=20, orient=HORIZONTAL, bg=themeColor,fg='white', length=120)
 totalTestSlider.grid(sticky='w',row=testSampleRow, column=1,columnspan=entryspan)
 totalTestSlider.set(1)
 
 # Main section
-button        = tk.Button(buttonFrame, text="Pyshoot", command=callback, bg='black', fg='white').grid(sticky='w',row=buttonRow,column=0)
-debugButton   = tk.Button(buttonFrame, text="Debug", command=displayDebug, bg='black', fg='white').grid(sticky='w',row=buttonRow,column=1)
-hitrateButton = tk.Button(buttonFrame, text="HitRate", command=displayHitrate, bg='black', fg='white').grid(sticky='w',row=buttonRow,column=2)
-
+button        = tk.Button(buttonFrame, text="Pyshoot", command=callback,
+                          bg='red', fg='white').grid(sticky='w',
+                                                     row=buttonRow,column=2)
 tk.Label(top, text="Accuracy (MOA):", anchor="w", bg=themeColor,fg='white').grid(sticky='w',row=accuracyRow)
 tk.Label(top, text="Shots:", anchor='w', bg=themeColor,fg='white').grid(sticky='w',row=shotsRow)
 tk.Label(top, text="Heat (MOA/Shot):", anchor="w", bg=themeColor,fg='white').grid(sticky='w',row=heatRow)
@@ -319,6 +331,20 @@ heatEntry.grid(row=heatRow, column=1,columnspan=entryspan)
 caliberEntry.grid(row=caliberRow, column=1,columnspan=entryspan)
 
 
+# Set up menu
+menubar = Menu(top)
+functionsMenu = Menu(menubar,tearoff=0)
+functionsMenu.add_command(label="HitRate Calculator", command=displayHitrate)
+functionsMenu.add_command(label="Debug Analytics", command=displayDebug)
+
+helpMenu = Menu(menubar, tearoff=0)
+helpMenu.add_command(label="About", command=displayAbout)
+helpMenu.add_command(label="PyShoot Usage Guide", command=displayUsage)
+
+menubar.add_cascade(label="Expand Functions", menu=functionsMenu)
+menubar.add_cascade(label="Help", menu=helpMenu)
+
+top.config(menu=menubar)
 top.iconbitmap('PyShootGui.ico')
 top.title("PyShoot")
 top.mainloop()

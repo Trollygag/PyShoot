@@ -73,10 +73,10 @@ def displayDebug():
         hitFrame.grid_remove()
         
         infoLabel = tk.Label(debugFrame,
-                             text="Debug Zone: Calibrated against 5 shots",
+                             text="Debug Zone",
                              anchor="w",
-                             bg=themeColor,fg='white').grid(
-                                 sticky='w',row=debugStartRow, columnspan=2)
+                             bg=themeColor,fg='plum1',font=("TkFixedFont 14 bold")).grid(
+                                 row=debugStartRow, columnspan=4)
 
 
         calcMOAVariable  = StringVar()
@@ -142,7 +142,7 @@ def displayDebug():
                                          minMOAVariable,
                                          maxMOAVariable),
                                      bg=buttonColor, fg='white').grid(
-                                         row=debugButtonRow,columnspan=2)
+                                         row=debugButtonRow, columnspan=4)
         
         debugFrame.grid()
     else:
@@ -194,40 +194,65 @@ def displayHitrate():
         debugFrame.grid_remove()
         debugStartRow  = buttonRow+1
         
-        infoLabel = tk.Label(hitFrame, text="=========Hit Rate Zone=========", anchor="w",
-                             bg=themeColor,fg='white').grid(
-                                 sticky='w',row=debugStartRow, columnspan=2)
+        infoLabel = tk.Label(hitFrame, text="Hit Analysis Zone", anchor="w",
+                             bg=themeColor,fg='plum1',font=("TkFixedFont 14 bold")).grid(
+                                 row=debugStartRow, columnspan=4)
 
         # This interface should allow you to input the size of the target,
         # your wind reading error, and your velocity error.
 
-        # 3 Input fields
+        targetOptions = HitAnalysis.getTargetTypes()
+        # 5 Input fields
         targetSizeEntry    = tk.Entry(hitFrame)
+        caliberMOAEntry    = tk.Entry(hitFrame)
         windErrorEntry     = tk.Entry(hitFrame)
         velocityErrorEntry = tk.Entry(hitFrame)
         targetSizeEntry.insert(0,"2")
+        caliberMOAEntry.insert(0,"0")
         windErrorEntry.insert(0,".75")
         velocityErrorEntry.insert(0,".2")
 
-        # 4 Description labels, one for each input, one for final display
+        targetShapeStr = StringVar(hitFrame)
+        targetShapeStr.set(targetOptions[0])
+        targetShapeMenu = OptionMenu(hitFrame, targetShapeStr, *targetOptions)
+
+        # 6 Description labels, one for each input, one for final display
         targetSizeLabel    = StringVar()
+        caliberMOALabel    = StringVar()
         windErrorLabel     = StringVar()
         velocityErrorLabel = StringVar()
+        targetTypeRowLabel = StringVar()
         hitrateVariable    = StringVar()
+
    
-        # 5 rows
-        targetRow    = debugStartRow+1
-        windEntryRow = targetRow+1
+        # 7 rows
+        targetTypeRow = debugStartRow+1
+        targetRow    = targetTypeRow+1
+        caliberRow   = targetRow+1
+        windEntryRow = caliberRow+1
         velRow       = windEntryRow+1
         hitRateRow   = velRow+1
         goButtonRow = hitRateRow+1
+
+        targetTypeRowLabel  = tk.Label(hitFrame, text="Target Type: ",
+                              anchor="w", bg=themeColor,fg='white').grid(
+                                  sticky='w',row=targetTypeRow, column=0)
         
-        targetLabel  = tk.Label(hitFrame, text="Target MOA: ",
+        targetShapeMenu.grid(sticky='w',row=targetTypeRow, column=1)
+        
+        targetLabel  = tk.Label(hitFrame, text="Target Height MOA: ",
                               anchor="w", bg=themeColor,fg='white').grid(
                                   sticky='w',row=targetRow, column=0)
 
         targetSizeEntry.grid(
             row=targetRow, column=1,columnspan=entryspan)
+
+        caliberLabel = tk.Label(hitFrame, text="Caliber MOA: ",
+                              anchor="w", bg=themeColor,fg='white').grid(
+                                  sticky='w',row=caliberRow, column=0)
+
+        caliberMOAEntry.grid(
+            row=caliberRow, column=1,columnspan=entryspan)
                                 
         windLabel  = tk.Label(hitFrame, text="Wind Err MOA: ",
                              anchor="w",bg=themeColor,fg='white').grid(
@@ -256,9 +281,11 @@ def displayHitrate():
         hitrateLaunchButton = tk.Button(hitFrame, text="Hit Rate",
                                         command= lambda: hitAnalysisGuiFn(
                                          targetSizeEntry,
+                                         caliberMOAEntry,
                                          windErrorEntry,
                                          velocityErrorEntry,
-                                         hitrateVariable),
+                                         hitrateVariable,
+                                         targetShapeStr),
                                         bg=buttonColor, fg='white').grid(
                                             row=goButtonRow, column=0, columnspan=3)
         
@@ -269,18 +296,22 @@ def displayHitrate():
 
 def hitAnalysisGuiFn(
     targetSizeEntry,
+    caliberMOAEntry,
     windErrorEntry,
     velocityErrorEntry,
-    hitrateVariable):
+    hitrateVariable,
+    targetShapeStr):
     
     targetSize  = float(targetSizeEntry.get())
     windErr     = float(windErrorEntry.get())
     velocityErr = float(velocityErrorEntry.get())
+    caliber  = float(caliberMOAEntry.get())
+    targetShape = targetShapeStr.get()
        
     accuracy = accuracyEntry.get()
     
     if accuracy and float(accuracy) > 0.01:
-        hitRate = HitAnalysis.hitAnalysis(float(accuracy),targetSize,windErr,velocityErr,1)
+        hitRate = HitAnalysis.hitAnalysis(float(accuracy),targetSize,windErr,velocityErr,1,caliber,targetShape)
         hitrateVariable.set("%s%%"%int(hitRate))
 
 def displayUsage():

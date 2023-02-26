@@ -63,8 +63,7 @@ def getHitrateText():
 ##############################################################################################\n\n\
 The hitrate analysis tool provides a Monte Carlo simulation of what would happen over time\n\
 given what you know about your wind reading vs your ballistic performance, your elevation\n\
-variance, and the angular target size. It only accounts for bullets that strike center on\n\
-the target and does not account for bullets that graze the edge.\n\n\
+variance, and the angular target size.\n\n\
 This tool does not provide you with the means of determining these factors - instead you can\n\
 input your assumptions about head/cross winds, your wind reading ability, ballistic\n\
 coefficient, speed, temperature, ammo velocity/SDs into a ballistic calculator (AB, Strelok\n\
@@ -74,12 +73,17 @@ analysis tool. Precision is fed from the main pyshoot GUI.\n\n\
 The internal default is modeling 10,000 shots, though only 100 shots are rendered onto\n\
 the chart for illustration purposes and as a performance compromise.\n\n\
 Hits are green, missses are red.\n\n\
-In this version, the target is given as a circle of some MOA. To determine the target size\n\
+The target is given as a shape of some MOA height. To determine the target size\n\
 from real life, you will either need to measure it with your optic (mil or MOA), or have a\n\
 known reference size to then back convert to MOA given your distance.\n\n\
 The hit-rate readout assumes you are centering your POIs at the target. A cold bore shot or\n\
 an inexperienced shooter may not account for this and may aim off target altogether, reducing\n\
 effectiveness. In that sense, the hit percent could be interpreted s the best case scenario.\n\n\
+The caliber readout in MOA allows you to account for edge-strikes on target. You will need\n\
+to calculate this by taking your fired caliber and dividing by distance to get its MOA at\n\
+the target and to stay same units as the target you shoot at. The chart drawing will scale\n\
+somewhat to account for this, but will not draw bullet circles below 0.05 MOA.\n\
+Edge strikes are counted if at least 15% of the bullet hits the edge.\n\n\
 ##############################################################################################"
     return text
 
@@ -101,7 +105,7 @@ specific number, you can click in the grey areas on either side of the slider to
 def getAboutText():
     text="\
 ##############################################################################################\n\n\
-v2023.02.25 - Developed by Trollygag.\n\n\
+v2023.02.26 - Developed by Trollygag.\n\n\
 PyShoot is a shot modeling, hit rate analysis tool using\n\
 a tuned normal distribution.\
 \n\nFor more information, see:\n\
@@ -110,7 +114,6 @@ a tuned normal distribution.\
 ##############################################################################################\n\n\
 Next features list:\n\n\
 ♦ Investigate alternate model distributions to account for more extreme variances\n\n\
-♦ Add IPSC silhouette target, diamond target, and square.\
 \n\n\
 ##############################################################################################"
     return text

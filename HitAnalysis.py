@@ -148,7 +148,7 @@ def drawShots(hitsList, targetSize, caliber, targetShape):
         for shotIdx in range(0,2):
             for shot in range(0,len(hitsList[shotIdx])):
                 if shot % DOWNSELECT == 0:
-                    circle = plt.Circle((hitsList[shotIdx][shot][0]+(SCALE/2), hitsList[shotIdx][shot][1]+(SCALE/2)), caliber, color=colorList[shotIdx])
+                    circle = plt.Circle((hitsList[shotIdx][shot][0]+(SCALE/2), hitsList[shotIdx][shot][1]+(SCALE/2)), caliber/2, color=colorList[shotIdx])
                     ax.add_artist(circle)
         return ax
        

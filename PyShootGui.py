@@ -236,7 +236,7 @@ def displayHitrate():
         windErrorEntry.grid(
             row=windEntryRow, column=1,columnspan=entryspan)
 
-        velocityErrorLabel = tk.Label(hitFrame, text="Velocity Err MOA: ",
+        velocityErrorLabel = tk.Label(hitFrame, text="Elevation Err MOA: ",
                               anchor="w", bg=themeColor,fg='white').grid(
                                   sticky='w',row=velRow, column=0)
 
@@ -349,7 +349,7 @@ totalTestSlider.set(1)
 button        = tk.Button(buttonFrame, text="Pyshoot", command=callback,
                           bg=buttonColor, fg='white').grid(sticky='w',
                                                      row=buttonRow,column=2)
-tk.Label(top, text="Accuracy (MOA):", anchor="w", bg=themeColor,fg='white').grid(sticky='w',row=accuracyRow)
+tk.Label(top, text="Precision (MOA):", anchor="w", bg=themeColor,fg='white').grid(sticky='w',row=accuracyRow)
 tk.Label(top, text="Shots:", anchor='w', bg=themeColor,fg='white').grid(sticky='w',row=shotsRow)
 tk.Label(top, text="Heat (MOA/Shot):", anchor="w", bg=themeColor,fg='white').grid(sticky='w',row=heatRow)
 tk.Label(top, text="Caliber (in):", anchor="w", bg=themeColor,fg='white').grid(sticky='w',row=caliberRow)

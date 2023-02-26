@@ -2,15 +2,23 @@
 import tkinter as tk
 import threading
 from tkinter import *
+from tkinter import ttk
 import PyShoot
 import HitAnalysis
+import PyShootHelp
 
-themeColor='navy'
+themeColor='#4D377B'
+buttonColor='#2B0042'
+minx=300
+miny=110
+#buttonColor='Indigo'
 maxTests=10000
 totalTests=0
 top = tk.Tk()
 top.configure(bg=themeColor)
-top.minsize(100,100)
+top.minsize(minx,miny)
+#top.geometry("320x320")
+top.option_add("*font", "TkFixedFont")
 numClicks = 1
 showDebugModeNext=True
 showHitModeNext=True
@@ -119,10 +127,10 @@ def displayDebug():
                                    sticky='w',row=maxRow, column=1)
         
         totalTestSlider  = tk.Scale(debugFrame, from_=1, to=maxTests,
-                                    orient=HORIZONTAL, length=200,
+                                    orient=HORIZONTAL, length=minx,
                                     bg=themeColor,fg='white')
         
-        totalTestSlider.grid(row=testSliderRow, columnspan=3)
+        totalTestSlider.grid(row=testSliderRow, columnspan=4)
         totalTestSlider.set(1)
         
         
@@ -133,7 +141,7 @@ def displayDebug():
                                          expMOAVariable,
                                          minMOAVariable,
                                          maxMOAVariable),
-                                     bg='red', fg='white').grid(
+                                     bg=buttonColor, fg='white').grid(
                                          row=debugButtonRow,columnspan=2)
         
         debugFrame.grid()
@@ -251,8 +259,8 @@ def displayHitrate():
                                          windErrorEntry,
                                          velocityErrorEntry,
                                          hitrateVariable),
-                                        bg='red', fg='white').grid(
-                                            row=goButtonRow,columnspan=2)
+                                        bg=buttonColor, fg='white').grid(
+                                            row=goButtonRow, column=0, columnspan=3)
         
         hitFrame.grid()
     else:
@@ -275,10 +283,38 @@ def hitAnalysisGuiFn(
         hitRate = HitAnalysis.hitAnalysis(float(accuracy),targetSize,windErr,velocityErr,1)
         hitrateVariable.set("%s%%"%int(hitRate))
 
-def displayAbout():
-    print("Displaying About")
 def displayUsage():
-    print("Displaying usage")
+    popup = Toplevel(top)
+
+    popup.geometry("785x700")
+    popup.title("Usage")
+    notebook = ttk.Notebook(popup)
+    
+    tabOver = ttk.Frame(notebook)
+    tabMainFunction  = ttk.Frame(notebook)
+    tabHitrate = ttk.Frame(notebook)
+    tabDebug = ttk.Frame(notebook)
+
+    labelOver = ttk.Label(tabOver, text=PyShootHelp.getOverviewText()).grid(column=0,row=0);
+    labelMain = ttk.Label(tabMainFunction, text=PyShootHelp.getMainText()).grid(column=0,row=0);
+    labelHit = ttk.Label(tabHitrate, text=PyShootHelp.getHitrateText()).grid(column=0,row=0);
+    labelDebug = ttk.Label(tabDebug, text=PyShootHelp.getDebugText()).grid(column=0,row=0);
+
+    
+    notebook.add(tabOver, text="Overview")
+    notebook.add(tabMainFunction, text="Main Functions")
+    notebook.add(tabHitrate, text="Hitrate Analysis")
+    notebook.add(tabDebug, text="Debug/High Sample")
+
+    notebook.pack(expand=1, fill="both", padx=(10,10))
+
+def displayAbout():
+    popup = Toplevel(top)
+
+    popup.geometry("785x400")
+    popup.title("About")
+    labelOver = ttk.Label(popup, text=PyShootHelp.getAboutText())
+    labelOver.grid(column=0,row=0, padx=(10,10));
 
 entryspan = 2
 
@@ -289,7 +325,7 @@ heatRow       = shotsRow + 1
 caliberRow    = heatRow + 1
 inputRow      = caliberRow
 testSampleRow = inputRow + 1
-buttonRow     = testSampleRow + 1
+buttonRow     = testSampleRow + 2
 secondButtonRow = buttonRow + 1
 debugStartRow = secondButtonRow + 1
 
@@ -305,13 +341,13 @@ buttonFrame.grid(row=buttonRow, columnspan=3)
 
 # Trials section
 tk.Label(top, text="Number Trials:", anchor="w", bg=themeColor,fg='white').grid(sticky='w',row=testSampleRow, column=0)
-totalTestSlider = tk.Scale(top, from_=1, to=20, orient=HORIZONTAL, bg=themeColor,fg='white', length=120)
+totalTestSlider = tk.Scale(top, from_=1, to=20, orient=HORIZONTAL, bg=themeColor,fg='white', length=(minx/2 + 10))
 totalTestSlider.grid(sticky='w',row=testSampleRow, column=1,columnspan=entryspan)
 totalTestSlider.set(1)
 
 # Main section
 button        = tk.Button(buttonFrame, text="Pyshoot", command=callback,
-                          bg='red', fg='white').grid(sticky='w',
+                          bg=buttonColor, fg='white').grid(sticky='w',
                                                      row=buttonRow,column=2)
 tk.Label(top, text="Accuracy (MOA):", anchor="w", bg=themeColor,fg='white').grid(sticky='w',row=accuracyRow)
 tk.Label(top, text="Shots:", anchor='w', bg=themeColor,fg='white').grid(sticky='w',row=shotsRow)

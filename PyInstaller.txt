@@ -1,0 +1,1 @@
+pyinstaller PyShootGui.py --onefile -i PyShootGui.ico

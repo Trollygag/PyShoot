@@ -1,6 +1,6 @@
 # PyShoot
 
-This is a Normal Distribution simulator for group shooting
+This is a Probability Distribution simulator for group shooting
 
 ## Requirements
 

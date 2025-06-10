@@ -5,6 +5,7 @@ import math
 import random
 import functools
 import PyShoot
+import PyShootMathModel
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -38,8 +39,7 @@ def getTargetTypes():
     return TARGET_LIST
 
 def calculateShots(accuracy, windResistance, windError, vSD):
-    
-    shotsList = PyShoot.generateGroup(accuracy, SAMPLES, 0, 0)
+    shotsList = PyShootMathModel.generateGroup(accuracy, SAMPLES, 0, 0)
     return correctShots(shotsList, windResistance, windError, vSD)    
 
 def correctShots(shotsList, windResistance, windError, vSD):

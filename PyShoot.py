@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import ConvexHull
 from datetime import datetime
+import PyShootMathModel
 
 
 # Application bounds
@@ -39,9 +40,6 @@ HEAT = 0.00
 # Litz measured a heat affect of 0.0067 in MALRS2
 HEAT_LITZ = 0.0067
 
-# This is a correction to accuracy so that the normal distribution produces the mean
-ACCURACY_CORRECTION=3.0625
-
 # This stores the max ES and the coordinates from the lines carrying them.
 class ESParameters:
     def __init__(self, es, exp1, exp2, eyp1, eyp2):
@@ -49,16 +47,7 @@ class ESParameters:
         self.exp1 = exp1
         self.exp2 = exp2
         self.eyp1 = eyp1
-        self.eyp2 = eyp2
-        
-
-# This function just generates groups
-def generateGroup(accuracy, shotcount, heat, scale):
-    #print("Group Generation with params: " + format(accuracy, '.2f') + " MOA, " + format(shotcount) + " shots, heat: " + format(heat) + ", scale: " + format(scale))
-    hitsList = []
-    for shot in range(shotcount):
-        hitsList.append(np.random.normal(scale/2, ((accuracy+(heat*shot))/ACCURACY_CORRECTION),2))
-    return hitsList
+        self.eyp2 = eyp2     
 
 # Small rofiler to help take measurements
 def printProfilerTime(timeStr):
@@ -156,7 +145,7 @@ def pyshootCalculate(accuracy, number):
         SCALE = 8
     validateAccuracy(accuracy)
     validateNumShots(number)
-    hitsList = generateGroup(accuracy, number, HEAT, SCALE)
+    hitsList = PyShootMathModel.generateGroup(accuracy, number, HEAT, SCALE)
     # Calculate convex hull (polygon that captures the outside of the hits)
     hull=ConvexHull(hitsList)
     esParams = calculateES(hull)
@@ -164,7 +153,7 @@ def pyshootCalculate(accuracy, number):
             
 def pyshoot(accuracy, number, heat, scale, caliber) :
     printProfilerTime("Start Pyshoot Generation/Calc")
-    hitsList = generateGroup(accuracy, number, heat, scale)
+    hitsList = PyShootMathModel.generateGroup(accuracy, number, heat, scale)
     # Calculate convex hull (polygon that captures the outside of the hits)
     hull=ConvexHull(hitsList)
     esParams = calculateES(hull)

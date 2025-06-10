@@ -3,7 +3,7 @@
 def getOverviewText():
     text="\
 ##############################################################################################\n\n\
-PyShoot is a shot modeling, hit rate analysis tool using a tuned normal distribution.\n\n\
+PyShoot is a shot modeling, hit rate analysis tool using selectable, tuned distributions.\n\n\
 The purpose is to allow a user build intuition for what could be possible group-to-group given\n\
 a constant set of parameters. PyShoot produces organic looking groups the way your won rifle\n\
 would and helps illustrate the extremes that are possible, probability of them happening, and\n\
@@ -107,7 +107,7 @@ def getAboutText():
 ##############################################################################################\n\n\
 v2023.02.26 - Developed by Trollygag.\n\n\
 PyShoot is a shot modeling, hit rate analysis tool using\n\
-a tuned normal distribution.\
+selectable, tuned distributions.\
 \n\nFor more information, see:\n\
 ♦ reddit.com/u/Trollygag\n\
 ♦ github.com/Trollygag\n\n\

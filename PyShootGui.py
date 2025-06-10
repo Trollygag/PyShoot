@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 import tkinter as tk
 import threading
 from tkinter import *
@@ -6,6 +7,7 @@ from tkinter import ttk
 import PyShoot
 import HitAnalysis
 import PyShootHelp
+import PyShootMathModel
 
 themeColor='#4D377B'
 buttonColor='#2B0042'
@@ -347,6 +349,21 @@ def displayAbout():
     labelOver = ttk.Label(popup, text=PyShootHelp.getAboutText())
     labelOver.grid(column=0,row=0, padx=(10,10));
 
+def displayMathModelSelection():
+    popup = Toplevel(top)
+
+    popup.geometry("160x30")
+    popup.title("Math Model Selection")
+    options = PyShootMathModel.getMathModelOptions()
+    selectedModel = StringVar(popup)
+    selectedModel.set(PyShootMathModel.MATH_MODEL.name)  # Set default value
+
+    def setMathModel( selected ):
+        PyShootMathModel.setMathModel(PyShootMathModel.MathModel[selected])
+        popup.destroy()
+
+    OptionMenu(popup, selectedModel, *options, command=setMathModel).grid(column=0,row=0, padx=(10,10))
+   
 entryspan = 2
 
 # Set up row layout
@@ -408,8 +425,12 @@ helpMenu = Menu(menubar, tearoff=0)
 helpMenu.add_command(label="About", command=displayAbout)
 helpMenu.add_command(label="PyShoot Usage Guide", command=displayUsage)
 
+settingsMenu = Menu(menubar, tearoff=0)
+settingsMenu.add_command(label="Select Math Model", command=displayMathModelSelection)
+
 menubar.add_cascade(label="Expand Functions", menu=functionsMenu)
 menubar.add_cascade(label="Help", menu=helpMenu)
+menubar.add_cascade(label="Settings", menu=settingsMenu)
 
 top.config(menu=menubar)
 top.iconbitmap('PyShootGui.ico')

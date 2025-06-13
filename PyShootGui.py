@@ -2,8 +2,8 @@
 import sys
 import tkinter as tk
 import threading
-from tkinter import *
-from tkinter import ttk
+
+from tkinter import ttk, Menu, Toplevel, StringVar, OptionMenu, END, HORIZONTAL
 import PyShoot
 import HitAnalysis
 import PyShootHelp
@@ -168,12 +168,16 @@ def debug(totalTestSlider, calcMOAVariable,
         
         PyShoot.printProfilerTime("Starting Debug Commands")
         
-        for i in range(totalTests):
-            result = PyShoot.pyshootCalculate(
-                float(accuracy),int(shots))
-            totalResult += result
-            minResult = min(minResult, result)
-            maxResult = max(maxResult, result)
+        import concurrent.futures
+
+        def run_pyshoot():
+            return PyShoot.pyshootCalculate(float(accuracy), int(shots))
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            results = list(executor.map(lambda _: run_pyshoot(), range(totalTests)))
+            totalResult = sum(results)
+            minResult = min(results)
+            maxResult = max(results)
             
         PyShoot.printProfilerTime("Finishing Debug Commands")
         
@@ -215,7 +219,7 @@ def displayHitrate():
         velocityErrorEntry.insert(0,".2")
 
         targetShapeStr = StringVar(hitFrame)
-        targetShapeStr.set(targetOptions[0])
+        targetShapeStr.set(HitAnalysis.TARGETSHAPE.name)  # Set default value
         targetShapeMenu = OptionMenu(hitFrame, targetShapeStr, *targetOptions)
 
         # 6 Description labels, one for each input, one for final display
@@ -308,7 +312,7 @@ def hitAnalysisGuiFn(
     windErr     = float(windErrorEntry.get())
     velocityErr = float(velocityErrorEntry.get())
     caliber  = float(caliberMOAEntry.get())
-    targetShape = targetShapeStr.get()
+    targetShape = getattr(HitAnalysis.TARGETSHAPE, targetShapeStr.get())
        
     accuracy = accuracyEntry.get()
     
@@ -352,7 +356,7 @@ def displayAbout():
 def displayMathModelSelection():
     popup = Toplevel(top)
 
-    popup.geometry("160x30")
+    popup.geometry("160x40")
     popup.title("Math Model Selection")
     options = PyShootMathModel.getMathModelOptions()
     selectedModel = StringVar(popup)

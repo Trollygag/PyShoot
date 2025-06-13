@@ -10,25 +10,28 @@ import PyShootMathModel
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import enum
+import os
 
-CIRCLE="circle"
-SQUARE="square"
-DIAMOND="diamond"
-IPSC="IPSC"
+class ShapesEnum(enum.Enum):
+    CIRCLE="Circle"
+    SQUARE="Square"
+    DIAMOND="Diamond"
+    IPSC="IPSC"
+    HOG="Hog"
+    DEER="Deer"
+    ELK="Elk"
 
-TARGET_LIST = [
-        CIRCLE,
-        SQUARE,
-        DIAMOND,
-        IPSC
-        ]
+HOG_MOA=7
+DEER_MOA=9
+ELK_MOA=15
 
 SAMPLES=10000
 DOWNSELECT=50
 MIN_SHOTSIZE=0.1
 MAX_SHOTSIZE=0.50
 SCALE=8
-TARGETSHAPE=TARGET_LIST[0]
+TARGETSHAPE=ShapesEnum.CIRCLE
 
 # vs overall height
 IPSC_SCALE_X=0.6
@@ -36,7 +39,7 @@ IPSC_SCALE_BODY=0.8
 IPSC_SCALE_HEAD=0.2
 
 def getTargetTypes():
-    return TARGET_LIST
+    return [shape.name for shape in ShapesEnum]
 
 def calculateShots(accuracy, windResistance, windError, vSD):
     shotsList = PyShootMathModel.generateGroup(accuracy, SAMPLES, 0, 0)
@@ -110,13 +113,13 @@ def calculateHitsAndMisses(shots, targetSize, caliber, targetShape):
     hitsandmiss.append(missesList)
 
     
-    if(targetShape == CIRCLE):
+    if(targetShape == ShapesEnum.CIRCLE):
         calculateShapeHit = calculateCircleHit
-    elif(targetShape == SQUARE):
+    elif(targetShape == ShapesEnum.SQUARE):
         calculateShapeHit = calculateSquareHit
-    elif(targetShape == DIAMOND):
+    elif(targetShape == ShapesEnum.DIAMOND):
         calculateShapeHit = calculateDiamondHit
-    elif(targetShape == IPSC):
+    elif(targetShape == ShapesEnum.IPSC):
         calculateShapeHit = calculateIPSCHit
     else:
         calculateShapeHit = calculateCircleHit
@@ -140,6 +143,13 @@ def calculateAngleHeight(targetSize):
     return 2.0 * math.sqrt((targetSize/2.0)**2.0 / 2.0)
 
 def drawShots(hitsList, targetSize, caliber, targetShape):
+
+    if targetSize > SCALE/2:
+        LSCALE= targetSize * 2
+    else:
+        LSCALE = SCALE
+    
+
     caliber = max(caliber,MIN_SHOTSIZE)
     caliber = min(caliber,MAX_SHOTSIZE)
     colorList = ['g','r']
@@ -148,7 +158,7 @@ def drawShots(hitsList, targetSize, caliber, targetShape):
         for shotIdx in range(0,2):
             for shot in range(0,len(hitsList[shotIdx])):
                 if shot % DOWNSELECT == 0:
-                    circle = plt.Circle((hitsList[shotIdx][shot][0]+(SCALE/2), hitsList[shotIdx][shot][1]+(SCALE/2)), caliber/2, color=colorList[shotIdx])
+                    circle = plt.Circle((hitsList[shotIdx][shot][0]+(LSCALE/2), hitsList[shotIdx][shot][1]+(LSCALE/2)), caliber/2, color=colorList[shotIdx])
                     ax.add_artist(circle)
         return ax
        
@@ -156,31 +166,71 @@ def drawShots(hitsList, targetSize, caliber, targetShape):
     fig, ax = plt.subplots() # note we must use plt.subplots, not plt.subplot
 
     # Draw target dot
-    if(targetShape == CIRCLE):
-        ax.add_artist(plt.Circle((SCALE/2, SCALE/2), targetSize/2,  color="grey"))
-    elif(targetShape == SQUARE):
-        ax.add_artist(plt.Rectangle((SCALE/2 - (targetSize / 2), SCALE/2 - (targetSize / 2)), targetSize, targetSize, color="grey"))
-    elif(targetShape == DIAMOND):
+    if(targetShape == ShapesEnum.CIRCLE):
+        ax.add_artist(plt.Circle((LSCALE/2, LSCALE/2), targetSize/2,  color="grey"))
+    elif(targetShape == ShapesEnum.SQUARE):
+        ax.add_artist(plt.Rectangle((LSCALE/2 - (targetSize / 2), LSCALE/2 - (targetSize / 2)), targetSize, targetSize, color="grey"))
+    elif(targetShape == ShapesEnum.DIAMOND):
         angledHeight = calculateAngleHeight(targetSize)
         translatedfactor = calculateRotatedUnitCenter(angledHeight)
-        rectangle = plt.Rectangle(((SCALE/2), (SCALE/2 - translatedfactor)), angledHeight, angledHeight, color="grey", angle=45)
+        rectangle = plt.Rectangle(((LSCALE/2), (LSCALE/2 - translatedfactor)), angledHeight, angledHeight, color="grey", angle=45)
         ax.add_artist(rectangle)
-    elif(targetShape == IPSC):
+    elif(targetShape == ShapesEnum.IPSC):
         # draw scaled body and head from the height
         targetY=targetSize*IPSC_SCALE_BODY
         targetX=targetSize*IPSC_SCALE_X
         targetHead=targetSize*IPSC_SCALE_HEAD
-        rectangle = plt.Rectangle((SCALE/2 - (targetX / 2), SCALE/2 - (targetY / 2)), targetX, targetY, color="grey")
-        rectangleHead = plt.Rectangle((SCALE/2 - (targetHead / 2), (SCALE/2 + targetY/2)), targetHead, targetHead, color="grey")
+        rectangle = plt.Rectangle((LSCALE/2 - (targetX / 2), LSCALE/2 - (targetY / 2)), targetX, targetY, color="grey")
+        rectangleHead = plt.Rectangle((LSCALE/2 - (targetHead / 2), (LSCALE/2 + targetY/2)), targetHead, targetHead, color="grey")
         ax.add_artist(rectangle)
         ax.add_artist(rectangleHead)
+    elif(targetShape == ShapesEnum.HOG or targetShape == ShapesEnum.DEER or targetShape == ShapesEnum.ELK):
+
+        LSCALE*=3
+        # Example: Plot a hog silhouette image centered on the target
+        import matplotlib.image as mpimg
+
+        vitalScale = 1.0
+        # Path to the hog image (should be a transparent PNG for best results)
+        if targetShape == ShapesEnum.HOG:
+            img_path = os.path.join(os.path.dirname(__file__), "hog_silhouette.png")
+            #vitalScale = HOG_MOA
+            vitalScale = 2.81
+        elif targetShape == ShapesEnum.DEER:
+            img_path = os.path.join(os.path.dirname(__file__), "deer_silhouette.png")
+            #vitalScale = DEER_MOA
+            vitalScale = 3.36
+        elif targetShape == ShapesEnum.ELK:
+            img_path = os.path.join(os.path.dirname(__file__), "elk_silhouette.png")
+            #vitalScale = ELK_MOA
+            vitalScale = 3.36
+            
+        
+        if os.path.exists(img_path):
+            img = mpimg.imread(img_path)
+            # Calculate image extent to center and scale it to targetSize
+            img_height, img_width = img.shape[0], img.shape[1]
+            aspect = img_width / img_height
+            # Scale image so its height matches targetSize
+            img_display_height = targetSize* vitalScale
+            img_display_width = img_display_height * aspect
+            extent = [
+                LSCALE/2 - img_display_width,
+                LSCALE/2 + img_display_width,
+                LSCALE/2 - img_display_height,
+                LSCALE/2 + img_display_height
+            ]
+            ax.imshow(img, extent=extent, zorder=0)
+        else:
+            # Fallback: draw a rectangle as a placeholder
+            ax.add_artist(plt.Rectangle((LSCALE/2 - (targetSize / 2), LSCALE/2 - (targetSize / 2)), targetSize, targetSize, color="grey"))
     
     # Draw hit distribution
     ax = drawHits(ax)
 
     # Set dimensions
-    plt.ylim(0,SCALE)
-    plt.xlim(0,SCALE)
+    plt.ylim(0,LSCALE)
+    plt.xlim(0,LSCALE)
     plt.gca().set_aspect('equal', adjustable='box')
 
     # Set title with the MOA calculation of polygon distance
@@ -190,7 +240,7 @@ def drawShots(hitsList, targetSize, caliber, targetShape):
     # Draw
     plt.show(block=False)
     
-def hitAnalysis(accuracy=1, targetSize=2, windErrorReading=2, velocitySD=15, windResistance=6.5, caliber=0.05, targetShape=TARGET_LIST[0]):
+def hitAnalysis(accuracy=1, targetSize=2, windErrorReading=2, velocitySD=15, windResistance=6.5, caliber=0.05, targetShape=TARGETSHAPE):
 
     shots   = calculateShots(accuracy, windResistance, windErrorReading, velocitySD)
     hits    = calculateHitsAndMisses(shots, targetSize, caliber, targetShape)

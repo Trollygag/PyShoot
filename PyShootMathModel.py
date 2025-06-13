@@ -9,15 +9,18 @@ class MathModel(enum.Enum):
     WEIBULL_K1 = 2
     WEIBULL_K1_5 = 3
     WEIBULL_K3 = 4
+    RALEIGH = 5
 
 # This is a correction to accuracy so that the normal distribution produces the mean
 NORMAL_ACCURACY_CORRECTION=3.09
 WEIBULL_K1_5_ACCURACY_CORRECTION=0.42
 WEIBULL_K3_ACCURACY_CORRECTION = 0.5
 WEIBULL_K1_ACCURACY_CORRECTION = .33333333
+RALEIGH_ACCURACY_CORRECTION = 0.463 # This is a correction to accuracy so that the Raleigh distribution produces the mean
 K1 = 1.0 # Weibull shape parameter
 K1_5=1.5 # Weibull shape parameter
 K3=3.0 # Weibull shape parameter
+R=2
 
 MATH_MODEL = MathModel.WEIBULL_K1_5
 # This is the math model used for generating groups.
@@ -43,6 +46,8 @@ def generateGroup(accuracy, shotcount, heat, scale):
         return generateWeibullGroup(accuracy, shotcount, heat, scale, K1_5, WEIBULL_K1_5_ACCURACY_CORRECTION)
     elif MATH_MODEL == MathModel.WEIBULL_K3:
         return generateWeibullGroup(accuracy, shotcount, heat, scale, K3, WEIBULL_K3_ACCURACY_CORRECTION)
+    elif MATH_MODEL == MathModel.RALEIGH:
+        return generateWeibullGroup(accuracy, shotcount, heat, scale, R, RALEIGH_ACCURACY_CORRECTION)
     
 # This function just generates groups
 def generateNormalGroup(accuracy, shotcount, heat, scale):

@@ -13,6 +13,14 @@ import math
 import enum
 import os
 
+class ShooterType(enum.Enum):
+    AVERAGE_HUNTER = "Average Hunter (Cold Bore)"
+    EXPERT_HUNTER = "Expert LR Hunter (Cold Bore)"
+    AVERAGE_COMPETITOR = "Average Competitor (Cold Bore)"
+    WORLD_CLASS_SHOOTER = "World Class Shooter (Cold Bore)"
+    EXPERT_SHOOTER = "Expert Shooter (Followup Shots)"
+    WORLD_CLASS_SHOOTER_FU = "World Class Shooter (Followup Shots)"
+
 class ShapesEnum(enum.Enum):
     CIRCLE="Circle"
     SQUARE="Square"
@@ -28,7 +36,7 @@ ELK_MOA=15
 
 SAMPLES=10000
 DOWNSELECT=50
-MIN_SHOTSIZE=0.1
+MIN_SHOTSIZE=0.02
 MAX_SHOTSIZE=0.50
 SCALE=8
 TARGETSHAPE=ShapesEnum.CIRCLE
@@ -37,6 +45,43 @@ TARGETSHAPE=ShapesEnum.CIRCLE
 IPSC_SCALE_X=0.6
 IPSC_SCALE_BODY=0.8
 IPSC_SCALE_HEAD=0.2
+
+def getDefaultTargetSize(selected):
+    if selected == ShapesEnum.CIRCLE:
+        return 12
+    elif selected == ShapesEnum.SQUARE:
+        return 12
+    elif selected == ShapesEnum.DIAMOND:
+        return 12
+    elif selected == ShapesEnum.IPSC:
+        return 70
+    elif selected == ShapesEnum.HOG:
+    #    return 4.0 * HOG_MOA
+        return HOG_MOA
+    elif selected == ShapesEnum.DEER:
+        #return 4.5 * DEER_MOA
+        return DEER_MOA
+    elif selected == ShapesEnum.ELK:
+        #return 3.8 * ELK_MOA
+        return ELK_MOA
+    else:
+        return 12
+    
+def getGenerateShiftParameters(shooterType):
+    if shooterType == ShooterType.AVERAGE_HUNTER:
+        return 1, 1
+    elif shooterType == ShooterType.EXPERT_HUNTER:
+        return .5, .5
+    elif shooterType == ShooterType.AVERAGE_COMPETITOR:
+        return .25, .25
+    elif shooterType == ShooterType.WORLD_CLASS_SHOOTER:
+        return .1, .1
+    elif shooterType == ShooterType.EXPERT_SHOOTER:
+        return 0, .1
+    elif shooterType == ShooterType.WORLD_CLASS_SHOOTER_FU:
+        return 0, 0.025
+    else:
+        raise ValueError("Invalid Shooter Type provided.")
 
 def getTargetTypes():
     return [shape.name for shape in ShapesEnum]
@@ -204,6 +249,9 @@ def drawShots(hitsList, targetSize, caliber, targetShape):
             img_path = os.path.join(os.path.dirname(__file__), "elk_silhouette.png")
             #vitalScale = ELK_MOA
             vitalScale = 3.36
+
+        targetScale = targetSize * vitalScale
+        LSCALE = targetScale * 2
             
         
         if os.path.exists(img_path):
@@ -240,9 +288,19 @@ def drawShots(hitsList, targetSize, caliber, targetShape):
     # Draw
     plt.show(block=False)
     
-def hitAnalysis(accuracy=1, targetSize=2, windErrorReading=2, velocitySD=15, windResistance=6.5, caliber=0.05, targetShape=TARGETSHAPE):
+def shiftShots(shots, shift):
+    if shift == 0:
+        return shots
+    shiftedShots = []
+    for shot in shots:
+        shiftedShot = [shot[0] + shift, shot[1]]
+        shiftedShots.append(shiftedShot)
+    return shiftedShots
+
+def hitAnalysis(accuracy=1, targetSize=2, windErrorReading=2, velocitySD=15, windResistance=6.5, caliber=0.05, targetShape=TARGETSHAPE, shift=0):
 
     shots   = calculateShots(accuracy, windResistance, windErrorReading, velocitySD)
+    shots = shiftShots(shots, shift)
     hits    = calculateHitsAndMisses(shots, targetSize, caliber, targetShape)
     hitRate = calculateHitsRatio(hits[0], shots)*100
     print("ratio: %s%%, hits: %s, misses: %s" % (hitRate, len(hits[0]), len(hits[1])))

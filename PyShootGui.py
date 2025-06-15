@@ -8,6 +8,7 @@ import PyShoot
 import HitAnalysis
 import PyShootHelp
 import PyShootMathModel
+from enum import Enum
 
 themeColor='#4D377B'
 buttonColor='#2B0042'
@@ -24,6 +25,12 @@ top.option_add("*font", "TkFixedFont")
 numClicks = 1
 showDebugModeNext=True
 showHitModeNext=True
+showAngularHitAnalysis=False
+
+def setupAngularHitAnalysis():
+    global showAngularHitAnalysis
+    showAngularHitAnalysis = not showAngularHitAnalysis
+
 
 # Kick off the PyShoot diagram
 def callback():
@@ -188,8 +195,7 @@ def debug(totalTestSlider, calcMOAVariable,
     else:
         resetEntries()
 
-# Kick off the hitratecomparator
-def displayHitrate():
+def displayAdvHitrate():
     global showDebugModeNext
     global showHitModeNext
     
@@ -200,7 +206,7 @@ def displayHitrate():
         debugFrame.grid_remove()
         debugStartRow  = buttonRow+1
         
-        infoLabel = tk.Label(hitFrame, text="Hit Analysis Zone", anchor="w",
+        infoLabel = tk.Label(hitFrame, text="Advanced Hit Analysis Zone", anchor="w",
                              bg=themeColor,fg='plum1',font=("TkFixedFont 14 bold")).grid(
                                  row=debugStartRow, columnspan=4)
 
@@ -208,6 +214,9 @@ def displayHitrate():
         # your wind reading error, and your velocity error.
 
         targetOptions = HitAnalysis.getTargetTypes()
+        targetShapeStr = StringVar(hitFrame)
+        targetShapeStr.set(HitAnalysis.TARGETSHAPE.name)  # Set default value
+
         # 5 Input fields
         targetSizeEntry    = tk.Entry(hitFrame)
         caliberMOAEntry    = tk.Entry(hitFrame)
@@ -218,9 +227,7 @@ def displayHitrate():
         windErrorEntry.insert(0,".75")
         velocityErrorEntry.insert(0,".2")
 
-        targetShapeStr = StringVar(hitFrame)
-        targetShapeStr.set(HitAnalysis.TARGETSHAPE.name)  # Set default value
-        targetShapeMenu = OptionMenu(hitFrame, targetShapeStr, *targetOptions)
+
 
         # 6 Description labels, one for each input, one for final display
         targetSizeLabel    = StringVar()
@@ -240,27 +247,39 @@ def displayHitrate():
         hitRateRow   = velRow+1
         goButtonRow = hitRateRow+1
 
+        targetLabelString = "Target Height (MOA): "
+
         targetTypeRowLabel  = tk.Label(hitFrame, text="Target Type: ",
                               anchor="w", bg=themeColor,fg='white').grid(
                                   sticky='w',row=targetTypeRow, column=0)
         
-        targetShapeMenu.grid(sticky='w',row=targetTypeRow, column=1)
+
         
-        targetLabel  = tk.Label(hitFrame, text="Target Height MOA: ",
+        targetLabel  = tk.Label(hitFrame, text=targetLabelString,
                               anchor="w", bg=themeColor,fg='white').grid(
                                   sticky='w',row=targetRow, column=0)
 
         targetSizeEntry.grid(
             row=targetRow, column=1,columnspan=entryspan)
 
-        caliberLabel = tk.Label(hitFrame, text="Caliber MOA: ",
+        def updateTargetSize(selected):
+            # Update the targetSizeEntry default value based on the selected target type
+            target_type = getattr(HitAnalysis.TARGETSHAPE, selected)
+            default_size = HitAnalysis.getDefaultTargetSize(target_type)
+            targetSizeEntry.delete(0, END)
+            targetSizeEntry.insert(0, str(default_size))
+
+        targetShapeMenu = OptionMenu(hitFrame, targetShapeStr, *targetOptions, command=updateTargetSize)
+        targetShapeMenu.grid(sticky='w',row=targetTypeRow, column=1)
+
+        caliberLabel = tk.Label(hitFrame, text="Caliber (MOA): ",
                               anchor="w", bg=themeColor,fg='white').grid(
                                   sticky='w',row=caliberRow, column=0)
 
         caliberMOAEntry.grid(
             row=caliberRow, column=1,columnspan=entryspan)
                                 
-        windLabel  = tk.Label(hitFrame, text="Wind Err MOA: ",
+        windLabel  = tk.Label(hitFrame, text="Wind Err (MOA): ",
                              anchor="w",bg=themeColor,fg='white').grid(
                                  sticky='w',row=windEntryRow, column=0)
                                 
@@ -286,12 +305,179 @@ def displayHitrate():
         # 1 additional button
         hitrateLaunchButton = tk.Button(hitFrame, text="Hit Rate",
                                         command= lambda: hitAnalysisGuiFn(
-                                         targetSizeEntry,
-                                         caliberMOAEntry,
-                                         windErrorEntry,
-                                         velocityErrorEntry,
+                                         float(targetSizeEntry.get()),
+                                         float(caliberMOAEntry.get()),
+                                         float(windErrorEntry.get()),
+                                         float(velocityErrorEntry.get()),
                                          hitrateVariable,
-                                         targetShapeStr),
+                                         getattr(HitAnalysis.TARGETSHAPE, targetShapeStr.get()),
+                                         float(accuracyEntry.get())),
+                                        bg=buttonColor, fg='white').grid(
+                                            row=goButtonRow, column=0, columnspan=3)
+        
+        hitFrame.grid()
+    else:
+        showHitModeNext = True
+        hitFrame.grid_remove()
+
+# Kick off the hitratecomparator
+def displaySimpleHitrate():
+    global showDebugModeNext
+    global showHitModeNext
+    
+    showDebugModeNext = True
+    
+    if(showHitModeNext):
+        velocityErrorScale = .1
+        showHitModeNext = False
+        debugFrame.grid_remove()
+        debugStartRow  = buttonRow+1
+        
+        infoLabel = tk.Label(hitFrame, text="Simple Hit Analysis Zone", anchor="w",
+                             bg=themeColor,fg='plum1',font=("TkFixedFont 14 bold")).grid(
+                                 row=debugStartRow, columnspan=4)
+
+        # This interface should allow you to input the size of the target,
+        # your wind reading error, and your velocity error.
+
+        targetOptions = HitAnalysis.getTargetTypes()
+        targetShapeStr = StringVar(hitFrame)
+        targetShapeStr.set(HitAnalysis.TARGETSHAPE.name)  # Set default value
+
+        # 5 Input fields
+        targetSizeEntry    = tk.Entry(hitFrame)
+        caliberMOAEntry    = tk.Entry(hitFrame)
+        windErrorEntry     = tk.Entry(hitFrame)
+        velocityErrorEntry = tk.Entry(hitFrame)
+        targetSizeEntry.insert(0,"12")
+        caliberMOAEntry.insert(0,"0.308")
+        windErrorEntry.insert(0,"4")
+        velocityErrorEntry.insert(0,"2")
+        distanceEntry = tk.Entry(hitFrame)
+        distanceEntry.insert(0,"100")
+
+
+
+        # 6 Description labels, one for each input, one for final display
+        targetSizeLabel    = StringVar()
+        caliberMOALabel    = StringVar()
+        windErrorLabel     = StringVar()
+        velocityErrorLabel = StringVar()
+        targetTypeRowLabel = StringVar()
+        hitrateVariable    = StringVar()
+
+   
+        # 7 rows
+        targetTypeRow = debugStartRow+1
+        targetRow    = targetTypeRow+1
+        caliberRow   = targetRow+1
+        windEntryRow = caliberRow+1
+        realWindRow = windEntryRow+1
+        velRow       = realWindRow+1
+
+        distanceRow = velRow+1
+        shooterTypeRow = distanceRow+1
+        hitRateRow   = shooterTypeRow+1
+        goButtonRow = hitRateRow+1
+
+        targetLabelString = "Target Height (Inches): "
+
+        targetTypeRowLabel  = tk.Label(hitFrame, text="Target Type: ",
+                              anchor="w", bg=themeColor,fg='white').grid(
+                                  sticky='w',row=targetTypeRow, column=0)
+        
+
+        
+        targetLabel  = tk.Label(hitFrame, text=targetLabelString,
+                              anchor="w", bg=themeColor,fg='white').grid(
+                                  sticky='w',row=targetRow, column=0)
+
+        targetSizeEntry.grid(
+            row=targetRow, column=1,columnspan=entryspan)
+
+        def updateTargetSize(selected):
+            # Update the targetSizeEntry default value based on the selected target type
+            target_type = getattr(HitAnalysis.TARGETSHAPE, selected)
+            default_size = HitAnalysis.getDefaultTargetSize(target_type)
+            targetSizeEntry.delete(0, END)
+            targetSizeEntry.insert(0, str(default_size))
+
+        targetShapeMenu = OptionMenu(hitFrame, targetShapeStr, *targetOptions, command=updateTargetSize)
+        targetShapeMenu.grid(sticky='w',row=targetTypeRow, column=1)
+
+        caliberLabel = tk.Label(hitFrame, text="Caliber (inches): ",
+                              anchor="w", bg=themeColor,fg='white').grid(
+                                  sticky='w',row=caliberRow, column=0)
+
+        caliberMOAEntry.grid(
+            row=caliberRow, column=1,columnspan=entryspan)
+                                
+        windLabel  = tk.Label(hitFrame, text="Wind Handling (90deg 10mph, MOA): ",
+                             anchor="w",bg=themeColor,fg='white').grid(
+                                 sticky='w',row=windEntryRow, column=0)
+                                
+        windErrorEntry.grid(
+            row=windEntryRow, column=1,columnspan=entryspan)
+
+        realWindLabel = tk.Label(hitFrame, text="Real Wind (mph): ",
+                         anchor="w", bg=themeColor, fg='white')
+        realWindLabel.grid(sticky='w', row=realWindRow, column=0)
+
+        realWindEntry = tk.Entry(hitFrame)
+        realWindEntry.insert(0, "5")
+        realWindEntry.grid(row=realWindRow, column=1,columnspan=entryspan)
+        
+        
+        hitrateLabel  = tk.Label(hitFrame, text="Hitrate: ",
+                              anchor="w", bg=themeColor,fg='white').grid(
+                                  sticky='w',row=hitRateRow, column=0)
+                               
+        hitrateResLabel = tk.Label(hitFrame, textvariable=hitrateVariable,
+                                anchor="w", bg=themeColor,fg='white').grid(
+                                    sticky='w',row=hitRateRow, column=1)
+        
+        distanceLabel = tk.Label(hitFrame, text="Distance (yards): ",
+                                 anchor="w", bg=themeColor, fg='white')
+        distanceLabel.grid(sticky='w', row=distanceRow, column=0)
+
+        distanceEntry.grid(row=distanceRow, column=1, columnspan=entryspan)             
+
+        shooterTypeVar = StringVar(hitFrame)
+        
+        shooterTypeVar.set(HitAnalysis.ShooterType.AVERAGE_HUNTER.value)  # Default value
+
+        dropdown_options = [stype.value for stype in HitAnalysis.ShooterType]
+        shooterTypeMenu = OptionMenu(hitFrame, shooterTypeVar, *dropdown_options)
+        shooterTypeMenu.grid(row=shooterTypeRow, column=0, columnspan=3, sticky='ew')
+
+        def grabAndCalculate():
+            windMetric=10
+            distanceEntryValue = int(distanceEntry.get())
+            distanceEntryUnitfied = distanceEntryValue / 100.0 * 1.047
+            targetSize = float(targetSizeEntry.get())/(distanceEntryUnitfied)
+            caliberMOA = float(caliberMOAEntry.get())/(distanceEntryUnitfied)
+            targetShapeValue    = getattr(HitAnalysis.TARGETSHAPE, targetShapeStr.get())
+            shooterTypeValue = next(st for st in HitAnalysis.ShooterType if st.value == shooterTypeVar.get())
+            shiftSwitch = HitAnalysis.getGenerateShiftParameters(shooterTypeValue)
+            nominalWindErr = float(windErrorEntry.get())
+            realWind = float(realWindEntry.get())
+            shift = shiftSwitch[0] * (realWind/windMetric * nominalWindErr)
+            wind = shiftSwitch[1] * (realWind/windMetric * nominalWindErr)/2
+            velocityError = velocityErrorScale * wind
+
+
+            hitAnalysisGuiFn(
+                                         targetSize,
+                                         caliberMOA,
+                                         wind,
+                                         velocityError,
+                                         hitrateVariable,
+                                         targetShapeValue,
+                                         float(accuracyEntry.get()),
+                                         shift)
+        # 1 additional button
+        hitrateLaunchButton = tk.Button(hitFrame, text="Hit Rate",
+                                        command= grabAndCalculate,
                                         bg=buttonColor, fg='white').grid(
                                             row=goButtonRow, column=0, columnspan=3)
         
@@ -301,23 +487,18 @@ def displayHitrate():
         hitFrame.grid_remove()
 
 def hitAnalysisGuiFn(
-    targetSizeEntry,
-    caliberMOAEntry,
-    windErrorEntry,
-    velocityErrorEntry,
+    targetSize,
+    caliber,
+    windErr,
+    velocityErr,
     hitrateVariable,
-    targetShapeStr):
-    
-    targetSize  = float(targetSizeEntry.get())
-    windErr     = float(windErrorEntry.get())
-    velocityErr = float(velocityErrorEntry.get())
-    caliber  = float(caliberMOAEntry.get())
-    targetShape = getattr(HitAnalysis.TARGETSHAPE, targetShapeStr.get())
-       
-    accuracy = accuracyEntry.get()
-    
-    if accuracy and float(accuracy) > 0.01:
-        hitRate = HitAnalysis.hitAnalysis(float(accuracy),targetSize,windErr,velocityErr,1,caliber,targetShape)
+    targetShape,
+    accuracy,
+    shift = 0.0
+    ):       
+        
+    if accuracy and accuracy > 0.01:
+        hitRate = HitAnalysis.hitAnalysis(accuracy,targetSize,windErr,velocityErr,1,caliber,targetShape,shift)
         hitrateVariable.set("%s%%"%int(hitRate))
 
 def displayUsage():
@@ -368,6 +549,12 @@ def displayMathModelSelection():
 
     OptionMenu(popup, selectedModel, *options, command=setMathModel).grid(column=0,row=0, padx=(10,10))
    
+def displayHitrate():
+    if showAngularHitAnalysis:
+        displayAdvHitrate()
+    else:
+        displaySimpleHitrate()
+
 entryspan = 2
 
 # Set up row layout
@@ -431,6 +618,7 @@ helpMenu.add_command(label="PyShoot Usage Guide", command=displayUsage)
 
 settingsMenu = Menu(menubar, tearoff=0)
 settingsMenu.add_command(label="Select Math Model", command=displayMathModelSelection)
+settingsMenu.add_command(label="Toggle Analysis Inputs", command=setupAngularHitAnalysis)
 
 menubar.add_cascade(label="Expand Functions", menu=functionsMenu)
 menubar.add_cascade(label="Help", menu=helpMenu)

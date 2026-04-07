@@ -103,8 +103,9 @@ def correctShots(shots_list, wind_resistance, wind_error, v_sd):
         avg_x = avg_x + shots_list[shot][0]
         avg_y = avg_y + shots_list[shot][1]
 
-    avg_x = avg_x / len(shots_list)
-    avg_y = avg_y / len(shots_list)
+    if len(shots_list) > 0:
+        avg_x = avg_x / len(shots_list)
+        avg_y = avg_y / len(shots_list)
     print("avg X: %.4f, avg Y: %.4f" % (avg_x, avg_y))
     return shots_list
             
@@ -177,6 +178,8 @@ def calculateHitsAndMisses(shots, target_size, caliber, target_shape):
 
 def calculateHitsRatio(hits, shots):
     """Calculate hit rate as a ratio of hits to total shots."""
+    if len(shots) == 0:
+        return 0.0
     return len(hits) / len(shots)
 
 def calculateRotatedUnitCenter(target_size):

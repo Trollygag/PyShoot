@@ -2,7 +2,6 @@
 
 import argparse
 import math
-import random
 import functools
 
 import matplotlib.pyplot as plt
@@ -85,8 +84,43 @@ def calculateES(hull):
 
     return ESParameters(max_length, exp1, exp2, eyp1, eyp2)
 
-def drawTarget(hitsList, hull, esParams, scale, caliber):
-    """Draw a target chart with shot placement and dispersion visualization."""
+def calculateMeanRadius(hits_list, scale):
+    """Calculate the mean radius (average distance from center) of all shots.
+    
+    Args:
+        hits_list: List of [x, y] coordinates for bullet holes.
+        scale: Canvas scale (center is at scale/2, scale/2).
+        
+    Returns:
+        Mean radius distance from center point to all shots.
+    """
+    if len(hits_list) == 0:
+        return 0.0
+    
+    center_x = scale / 2
+    center_y = scale / 2
+    total_distance = 0.0
+    
+    for shot in hits_list:
+        dx = shot[0] - center_x
+        dy = shot[1] - center_y
+        distance = math.sqrt(dx * dx + dy * dy)
+        total_distance += distance
+    
+    mean_radius = total_distance / len(hits_list)
+    return mean_radius
+
+def drawTarget(hitsList, hull, esParams, scale, caliber, mean_radius=None):
+    """Draw a target chart with shot placement and dispersion visualization.
+    
+    Args:
+        hitsList: List of shot coordinates.
+        hull: Convex hull object for group boundary.
+        esParams: Extreme Spread parameters.
+        scale: Chart scale in MOA.
+        caliber: Bullet diameter.
+        mean_radius: Optional pre-calculated mean radius for display.
+    """
     # You can add or remove colors. More colors makes individual shots easier to spot
     colors = ['r', 'g', 'b', 'orange', 'gold', 'purple', 'darkcyan', 'sienna']
     color_count = len(colors)
@@ -114,7 +148,7 @@ def drawTarget(hitsList, hull, esParams, scale, caliber):
 
     # Draw convex hull outline
     for simplex in hull.simplices:
-        plt.plot(hull.points[simplex, 0], hull.points[simplex, 1], 'k-', color='dimgray')
+        plt.plot(hull.points[simplex, 0], hull.points[simplex, 1], color='dimgray')
 
     # Draw line between the extreme spread endpoints
     line_width = max(1, int(caliber * 5 + 1))
@@ -126,8 +160,12 @@ def drawTarget(hitsList, hull, esParams, scale, caliber):
     plt.xlim(0, scale)
     plt.gca().set_aspect('equal', adjustable='box')
 
-    # Set title with the MOA calculation of extreme spread
-    title_str = "Dispersion: %.2f MOA C-C" % esParams.es
+    # Calculate mean radius if not provided
+    if mean_radius is None:
+        mean_radius = calculateMeanRadius(hitsList, scale)
+    
+    # Set title with both ES and mean radius
+    title_str = "ES: %.2f MOA | Mean Radius: %.2f MOA" % (esParams.es, mean_radius)
     plt.title(title_str)
 
 def show():
@@ -166,7 +204,8 @@ def pyshootCalculate(accuracy, number):
     # Calculate convex hull (polygon that captures the outside of the hits)
     hull = ConvexHull(hits_list)
     es_params = calculateES(hull)
-    return es_params.es
+    es_params.mr = calculateMeanRadius(hits_list, scale)
+    return es_params
             
 def pyshoot(accuracy, number, heat, scale, caliber):
     """Generate a single shot group and display the results."""

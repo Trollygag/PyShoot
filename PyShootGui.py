@@ -7,6 +7,7 @@ probability, and debugging ballistic models.
 import sys
 import tkinter as tk
 import threading
+import concurrent.futures
 
 from tkinter import ttk, Menu, Toplevel, StringVar, OptionMenu, END, HORIZONTAL
 import PyShoot
@@ -98,7 +99,7 @@ def displayDebug():
     global showHitModeNext
     showHitModeNext=True
     
-    if(showDebugModeNext == True):
+    if showDebugModeNext:
         showDebugModeNext=False
         hitFrame.grid_remove()
         
@@ -113,16 +114,19 @@ def displayDebug():
         expMOAVariable   = StringVar()
         minMOAVariable   = StringVar()
         maxMOAVariable   = StringVar()
+        meanRadiusVariable = StringVar()
         calcMOAVariable.set("")
         expMOAVariable.set("")
         minMOAVariable.set("")
         maxMOAVariable.set("")
+        meanRadiusVariable.set("")
         testSliderRow    = debugStartRow+1
         calcedRow        = testSliderRow+1
         expectedRow      = calcedRow+1
         minRow           = expectedRow+1
         maxRow           = minRow+1
-        debugButtonRow   = maxRow+1
+        meanRadiusRow    = maxRow+1
+        debugButtonRow   = meanRadiusRow+1
         
         calcLabel  = tk.Label(debugFrame, text="Calc MOA: ",
                               anchor="w", bg=themeColor,fg='white').grid(
@@ -156,6 +160,14 @@ def displayDebug():
                                anchor="w", bg=themeColor,fg='white').grid(
                                    sticky='w',row=maxRow, column=1)
         
+        meanRadiusLabel  = tk.Label(debugFrame, text="Mean Radius: ",
+                             anchor="w",bg=themeColor,fg='white').grid(
+                                 sticky='w',row=meanRadiusRow, column=0)
+                                
+        meanRadiusResLabel = tk.Label(debugFrame, textvariable=meanRadiusVariable,
+                               anchor="w", bg=themeColor,fg='white').grid(
+                                   sticky='w',row=meanRadiusRow, column=1)
+        
         totalTestSlider  = tk.Scale(debugFrame, from_=1, to=maxTests,
                                     orient=HORIZONTAL, length=minx,
                                     bg=themeColor,fg='white')
@@ -170,7 +182,8 @@ def displayDebug():
                                          calcMOAVariable,
                                          expMOAVariable,
                                          minMOAVariable,
-                                         maxMOAVariable),
+                                         maxMOAVariable,
+                                         meanRadiusVariable),
                                      bg=buttonColor, fg='white').grid(
                                          row=debugButtonRow, columnspan=4)
         
@@ -181,7 +194,7 @@ def displayDebug():
     
 
 def debug(total_test_slider, calc_moa_variable,
-          exp_moa_variable, min_moa_variable, max_moa_variable):
+          exp_moa_variable, min_moa_variable, max_moa_variable, mean_radius_variable):
     """Run debug/batch analysis on specified number of samples.
     
     Args:
@@ -190,13 +203,14 @@ def debug(total_test_slider, calc_moa_variable,
         exp_moa_variable: Display variable for expected MOA.
         min_moa_variable: Display variable for minimum MOA.
         max_moa_variable: Display variable for maximum MOA.
+        mean_radius_variable: Display variable for mean radius.
     """
     
     accuracy = accuracyEntry.get()
     shots    = shotsEntry.get()
     
     if validateEntries(accuracy, shots):
-        totalTests  = totalTestSlider.get()
+        totalTests  = total_test_slider.get()
         totalResult = 0
         
         minResult = sys.maxsize
@@ -204,23 +218,27 @@ def debug(total_test_slider, calc_moa_variable,
         
         PyShoot.printProfilerTime("Starting Debug Commands")
         
-        import concurrent.futures
-
         def run_pyshoot():
             return PyShoot.pyshootCalculate(float(accuracy), int(shots))
 
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
             results = list(executor.map(lambda _: run_pyshoot(), range(totalTests)))
-            totalResult = sum(results)
-            minResult = min(results)
-            maxResult = max(results)
+            totalResult = sum(result.es for result in results)
+            minResult = min(result.es for result in results)
+            maxResult = max(result.es for result in results)
+            mean_radius = sum(result.mr for result in results) / len(results) if results else 0
             
         PyShoot.printProfilerTime("Finishing Debug Commands")
         
-        calcMOAVariable.set(format((totalResult / totalTests), '.2f'))
-        expMOAVariable.set(accuracy)
-        minMOAVariable.set(minResult)
-        maxMOAVariable.set(maxResult)
+        if totalTests > 0:
+            calc_moa_variable.set(format((totalResult / totalTests), '.2f'))
+        else:
+            calc_moa_variable.set("0.00")
+        exp_moa_variable.set(accuracy)
+        min_moa_variable.set(format(minResult, '.2f'))
+        max_moa_variable.set(format(maxResult, '.2f'))
+        mean_radius_variable.set(format(mean_radius, '.2f'))
     else:
         resetEntries()
 
@@ -235,7 +253,7 @@ def displayAdvHitrate():
     
     showDebugModeNext = True
     
-    if(showHitModeNext):
+    if showHitModeNext:
         showHitModeNext = False
         debugFrame.grid_remove()
         debugStartRow  = buttonRow+1
@@ -261,14 +279,7 @@ def displayAdvHitrate():
         windErrorEntry.insert(0,".75")
         velocityErrorEntry.insert(0,".2")
 
-
-
-        # 6 Description labels, one for each input, one for final display
-        targetSizeLabel    = StringVar()
-        caliberMOALabel    = StringVar()
-        windErrorLabel     = StringVar()
-        velocityErrorLabel = StringVar()
-        targetTypeRowLabel = StringVar()
+        # Variables for output display
         hitrateVariable    = StringVar()
 
    
@@ -365,7 +376,7 @@ def displaySimpleHitrate():
     
     showDebugModeNext = True
     
-    if(showHitModeNext):
+    if showHitModeNext:
         velocityErrorScale = .1
         showHitModeNext = False
         debugFrame.grid_remove()
@@ -394,14 +405,7 @@ def displaySimpleHitrate():
         distanceEntry = tk.Entry(hitFrame)
         distanceEntry.insert(0,"100")
 
-
-
-        # 6 Description labels, one for each input, one for final display
-        targetSizeLabel    = StringVar()
-        caliberMOALabel    = StringVar()
-        windErrorLabel     = StringVar()
-        velocityErrorLabel = StringVar()
-        targetTypeRowLabel = StringVar()
+        # Variables for output display
         hitrateVariable    = StringVar()
 
    
@@ -634,7 +638,7 @@ buttonFrame.grid(row=buttonRow, columnspan=3)
 
 # Trials section
 tk.Label(top, text="Number Trials:", anchor="w", bg=themeColor,fg='white').grid(sticky='w',row=testSampleRow, column=0)
-totalTestSlider = tk.Scale(top, from_=1, to=20, orient=HORIZONTAL, bg=themeColor,fg='white', length=(minx/2 + 10))
+totalTestSlider = tk.Scale(top, from_=1, to=maxTests, orient=HORIZONTAL, bg=themeColor,fg='white', length=(minx/2 + 10))
 totalTestSlider.grid(sticky='w',row=testSampleRow, column=1,columnspan=entryspan)
 totalTestSlider.set(1)
 

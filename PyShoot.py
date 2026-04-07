@@ -40,125 +40,147 @@ HEAT = 0.00
 # Litz measured a heat affect of 0.0067 in MALRS2
 HEAT_LITZ = 0.0067
 
-# This stores the max ES and the coordinates from the lines carrying them.
+# This stores the max ES and the coordinates from the points carrying them.
 class ESParameters:
+    """Container for Extreme Spread (ES) parameters and endpoint coordinates."""
     def __init__(self, es, exp1, exp2, eyp1, eyp2):
-        self.es = es
-        self.exp1 = exp1
-        self.exp2 = exp2
-        self.eyp1 = eyp1
-        self.eyp2 = eyp2     
+        self.es = es      # Extreme Spread distance
+        self.exp1 = exp1  # First endpoint X coordinate
+        self.exp2 = exp2  # Second endpoint X coordinate
+        self.eyp1 = eyp1  # First endpoint Y coordinate
+        self.eyp2 = eyp2  # Second endpoint Y coordinate     
 
-# Small rofiler to help take measurements
+# Small profiler to help take measurements
 def printProfilerTime(timeStr):
+    """Print current time with a descriptive message."""
     now = datetime.now()
-    now.strftime("%H:%M:%S.%f")
-    print("%s time: %s"%(timeStr, now))
+    formatted_time = now.strftime("%H:%M:%S.%f")
+    print("%s time: %s" % (timeStr, formatted_time))
     
-# Calculate max polygon diameter. I don't know how to code a rotating calipers algorithm
-# so for now, I'm just brute forcing this.
-def calculateES(hull) :
-    maxLength = 0
+# Calculate max polygon diameter using brute force method.
+# TODO: Consider implementing rotating calipers algorithm for better performance.
+def calculateES(hull):
+    """Calculate the Extreme Spread (ES) of a convex hull."""
+    max_length = 0
     exp1 = 0
     exp2 = 0
     eyp1 = 0
     eyp2 = 0
     
     for idx in range(len(hull.vertices)):
-        for idx2 in range(idx+1,len(hull.vertices)):
-            xp1 = hull.points[hull.vertices[idx],0]
-            xp2 = hull.points[hull.vertices[idx2],0]
-            yp1 = hull.points[hull.vertices[idx],1]
-            yp2 = hull.points[hull.vertices[idx2],1]
-            xdiff=math.fabs(xp2-xp1)
-            ydiff=math.fabs(yp2-yp1)
+        for idx2 in range(idx + 1, len(hull.vertices)):
+            xp1 = hull.points[hull.vertices[idx], 0]
+            xp2 = hull.points[hull.vertices[idx2], 0]
+            yp1 = hull.points[hull.vertices[idx], 1]
+            yp2 = hull.points[hull.vertices[idx2], 1]
+            xdiff = abs(xp2 - xp1)
+            ydiff = abs(yp2 - yp1)
             distance = math.hypot(xdiff, ydiff)
-            if(distance > maxLength):
-                maxLength = distance
-                exp1=xp1
-                exp2=xp2
-                eyp1=yp1
-                eyp2=yp2
+            if distance > max_length:
+                max_length = distance
+                exp1 = xp1
+                exp2 = xp2
+                eyp1 = yp1
+                eyp2 = yp2
 
-    return ESParameters(maxLength, exp1, exp2, eyp1, eyp2)
+    return ESParameters(max_length, exp1, exp2, eyp1, eyp2)
 
 def drawTarget(hitsList, hull, esParams, scale, caliber):
+    """Draw a target chart with shot placement and dispersion visualization."""
     # You can add or remove colors. More colors makes individual shots easier to spot
-    colors=['r','g','b','orange','gold','purple','darkcyan','sienna'] 
-    colorsize=len(colors)
+    colors = ['r', 'g', 'b', 'orange', 'gold', 'purple', 'darkcyan', 'sienna']
+    color_count = len(colors)
 
-    # This function just draws dots
-    def drawHits(ax) :
-        for shot in range(0,len(hitsList)):
-            circle = plt.Circle(hitsList[shot], caliber/2, color=colors[shot%colorsize])
+    # This function draws the bullet holes as circles
+    def drawHits(ax):
+        for shot in range(len(hitsList)):
+            circle = plt.Circle(hitsList[shot], caliber / 2, color=colors[shot % color_count])
             ax.add_artist(circle)
         return ax
        
-    fig, ax = plt.subplots() # note we must use plt.subplots, not plt.subplot
+    fig, ax = plt.subplots()  # Note: must use plt.subplots, not plt.subplot
 
-    # Draw target dot
-    ax.add_artist(plt.Circle((scale/2, scale/2), 0.5, fill=False, linewidth=8))
-    ax.add_artist(plt.Circle((scale/2, scale/2), 0.125, color='black'))
+    # Draw target bullseye (outer and center circles)
+    ax.add_artist(plt.Circle((scale / 2, scale / 2), 0.5, fill=False, linewidth=8))
+    ax.add_artist(plt.Circle((scale / 2, scale / 2), 0.125, color='black'))
 
-    # Draw grid (square)
+    # Draw grid (square grid for reference)
     for i in range(int(scale)):
-        plt.plot((0,scale), (i,i), linewidth=0.5,color='black')
-        plt.plot((i,i), (0,scale), linewidth=0.5,color='black')
+        plt.plot((0, scale), (i, i), linewidth=0.5, color='black')
+        plt.plot((i, i), (0, scale), linewidth=0.5, color='black')
 
     # Draw hit distribution
     ax = drawHits(ax)
 
-    # Draw connectors for the convex hull
+    # Draw convex hull outline
     for simplex in hull.simplices:
-        plt.plot(hull.points[simplex,0], hull.points[simplex,1], 'k-', color='dimgray')
+        plt.plot(hull.points[simplex, 0], hull.points[simplex, 1], 'k-', color='dimgray')
 
-    # Draw line between the points of the max diameter
-    plt.plot((esParams.exp1, esParams.exp2), (esParams.eyp1,esParams.eyp2),color='gold', linewidth=int(caliber*5+1))
+    # Draw line between the extreme spread endpoints
+    line_width = max(1, int(caliber * 5 + 1))
+    plt.plot((esParams.exp1, esParams.exp2), (esParams.eyp1, esParams.eyp2),
+             color='gold', linewidth=line_width)
 
-    # Set dimensions
-    plt.ylim(0,scale)
-    plt.xlim(0,scale)
+    # Set chart dimensions
+    plt.ylim(0, scale)
+    plt.xlim(0, scale)
     plt.gca().set_aspect('equal', adjustable='box')
 
-    # Set title with the MOA calculation of polygon distance
-    titleStr="Dispersion: "+format(esParams.es, '.2f')+" MOA C-C"
-    plt.title(titleStr)
+    # Set title with the MOA calculation of extreme spread
+    title_str = "Dispersion: %.2f MOA C-C" % esParams.es
+    plt.title(title_str)
 
 def show():
     plt.show()
 
-def pyshootlite(accuracy, number,heat,caliber):
+def pyshootlite(accuracy, number, heat, caliber):
+    """Generate and display a single group with automatic scaling."""
+    # Determine scale based on accuracy
     if accuracy > 3:
-        SCALE = round(accuracy*3)
+        scale = round(accuracy * 3)
     else:
-        SCALE = 8
+        scale = 8
+    
+    # Validate inputs
     validateAccuracy(accuracy)
     validateNumShots(number)
     validateHeat(heat)
     validateCaliber(caliber)
-    pyshoot(accuracy, number, heat, SCALE, caliber)
+    
+    pyshoot(accuracy, number, heat, scale, caliber)
 
 def pyshootCalculate(accuracy, number):
+    """Calculate Extreme Spread without graphical output."""
+    # Determine scale based on accuracy
     if accuracy > 3:
-        SCALE = round(accuracy*3)
+        scale = round(accuracy * 3)
     else:
-        SCALE = 8
+        scale = 8
+    
+    # Validate inputs
     validateAccuracy(accuracy)
     validateNumShots(number)
-    hitsList = PyShootMathModel.generateGroup(accuracy, number, HEAT, SCALE)
+    
+    # Generate group and calculate ES
+    hits_list = PyShootMathModel.generateGroup(accuracy, number, HEAT, scale)
     # Calculate convex hull (polygon that captures the outside of the hits)
-    hull=ConvexHull(hitsList)
-    esParams = calculateES(hull)
-    return esParams.es
+    hull = ConvexHull(hits_list)
+    es_params = calculateES(hull)
+    return es_params.es
             
-def pyshoot(accuracy, number, heat, scale, caliber) :
+def pyshoot(accuracy, number, heat, scale, caliber):
+    """Generate a single shot group and display the results."""
     printProfilerTime("Start Pyshoot Generation/Calc")
-    hitsList = PyShootMathModel.generateGroup(accuracy, number, heat, scale)
+    
+    # Generate shot group
+    hits_list = PyShootMathModel.generateGroup(accuracy, number, heat, scale)
+    
     # Calculate convex hull (polygon that captures the outside of the hits)
-    hull=ConvexHull(hitsList)
-    esParams = calculateES(hull)
+    hull = ConvexHull(hits_list)
+    es_params = calculateES(hull)
+    
     printProfilerTime("End Pyshoot Generation/Calc")
-    drawTarget(hitsList, hull, esParams, scale, caliber)
+    drawTarget(hits_list, hull, es_params, scale, caliber)
 
 def check_int_range(val, min_val=None, max_val=None):
     """Input validation function for integers."""
@@ -190,15 +212,19 @@ def check_float_range(val, min_val=None, max_val=None):
     return fval
 
 def validateHeat(heat):
+    """Validate heat soak parameter (must be >= 0)."""
     return check_float_range(heat, min_val=0)
 
 def validateAccuracy(accuracy):
-    return check_float_range(accuracy, min_val=0)
+    """Validate accuracy/precision parameter (must be > 0)."""
+    return check_float_range(accuracy, min_val=0.001)
 
-def validateNumShots(number) :
-    return check_int_range(number, min_val=MIN_SHOTS - 1, max_val=MAX_SHOTS + 1)
+def validateNumShots(number):
+    """Validate number of shots (must be between MIN_SHOTS and MAX_SHOTS)."""
+    return check_int_range(number, min_val=MIN_SHOTS, max_val=MAX_SHOTS)
 
 def validateCaliber(caliber):
+    """Validate caliber diameter (must be between LOWER_CAL and UPPER_CAL)."""
     return check_float_range(caliber, min_val=LOWER_CAL, max_val=UPPER_CAL)
 
 def main():

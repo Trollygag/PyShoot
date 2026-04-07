@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""PyShoot GUI - Tkinter-based graphical user interface for ballistic simulation.
+
+Provides the main interactive interface for generating shot groups, analyzing hit
+probability, and debugging ballistic models.
+"""
 import sys
 import tkinter as tk
 import threading
@@ -10,12 +15,12 @@ import PyShootHelp
 import PyShootMathModel
 from enum import Enum
 
-themeColor='#4D377B'
-buttonColor='#2B0042'
-minx=300
-miny=110
-#buttonColor='Indigo'
-maxTests=10000
+# UI Theme Configuration
+themeColor = '#4D377B'  # Main purple theme
+buttonColor = '#2B0042'  # Dark purple buttons
+minx = 300  # Minimum window width
+miny = 110  # Minimum window height
+maxTests = 10000  # Maximum batch analysis samples
 totalTests=0
 top = tk.Tk()
 top.configure(bg=themeColor)
@@ -28,22 +33,27 @@ showHitModeNext=True
 showAngularHitAnalysis=False
 
 def setupAngularHitAnalysis():
+    """Toggle between simple and advanced hit analysis mode."""
     global showAngularHitAnalysis
     showAngularHitAnalysis = not showAngularHitAnalysis
 
 
-# Kick off the PyShoot diagram
 def callback():
-
+    """Generate and display simulated shot groups.
+    
+    Validates input parameters and generates the specified number of shot groups
+    using the provided ballistic parameters.
+    """
     accuracy = accuracyEntry.get()
-    shots    = shotsEntry.get()    
-    heat     = heatEntry.get()
-    caliber  = caliberEntry.get()
-    
-    print("accuracy %s, shots %s, caliber %s"%(accuracy, shots, caliber))
-    
+    shots = shotsEntry.get()
+    heat = heatEntry.get()
+    caliber = caliberEntry.get()
+
+    print("Shot group parameters - accuracy: %s MOA, shots: %s, caliber: %s in, heat: %s" %
+          (accuracy, shots, caliber, heat))
+
     if heat and caliber and validateEntries(accuracy, shots):
-        for i in range(0, int(totalTestSlider.get())) :
+        for i in range(0, int(totalTestSlider.get())):
             PyShoot.pyshootlite(
                 float(accuracy), int(shots),
                 float(heat), float(caliber))
@@ -51,26 +61,37 @@ def callback():
     else:
         resetEntries()
 
-# Set the entries to defaults
 def resetEntries():
+    """Reset all input fields to their default values."""
     accuracyEntry.delete(0, END)
     accuracyEntry.insert(0, PyShoot.ACCURACY)
     shotsEntry.delete(0, END)
     shotsEntry.insert(0, PyShoot.MIN_SHOTS)
     heatEntry.delete(0, END)
     heatEntry.insert(0, PyShoot.HEAT_LITZ)
-    caliberEntry.delete(0,END)
+    caliberEntry.delete(0, END)
     caliberEntry.insert(0, PyShoot.CALIBER)
 
-# Validate the input fields and reset if they are bunk
 def validateEntries(accuracy, shots):
-    isValid = accuracy and shots and int(shots) > 2 and float(accuracy) >= 0.01
-    if not isValid:
-        resetEntries()
-    return isValid
+    """Validate input field values.
     
-# Displays the debug menu
+    Args:
+        accuracy: Precision value in MOA.
+        shots: Number of shots in group.
+        
+    Returns:
+        True if valid, False otherwise. Resets entries if invalid.
+    """
+    is_valid = accuracy and shots and int(shots) > 2 and float(accuracy) >= 0.01
+    if not is_valid:
+        resetEntries()
+    return is_valid
 def displayDebug():
+    """Display the debug/batch analysis interface.
+    
+    Allows users to run high-sample analysis to validate ballistic models
+    and find statistical extremes.
+    """
     # Set up Debug
 
     global showDebugModeNext
@@ -159,9 +180,17 @@ def displayDebug():
         debugFrame.grid_remove()
     
 
-# Kick off the debug mode
-def debug(totalTestSlider, calcMOAVariable,
-          expMOAVariable, minMOAVariable, maxMOAVariable):
+def debug(total_test_slider, calc_moa_variable,
+          exp_moa_variable, min_moa_variable, max_moa_variable):
+    """Run debug/batch analysis on specified number of samples.
+    
+    Args:
+        total_test_slider: Slider widget for sample count.
+        calc_moa_variable: Display variable for calculated MOA.
+        exp_moa_variable: Display variable for expected MOA.
+        min_moa_variable: Display variable for minimum MOA.
+        max_moa_variable: Display variable for maximum MOA.
+    """
     
     accuracy = accuracyEntry.get()
     shots    = shotsEntry.get()
@@ -196,6 +225,11 @@ def debug(totalTestSlider, calcMOAVariable,
         resetEntries()
 
 def displayAdvHitrate():
+    """Display the advanced hit rate analysis interface.
+    
+    Provides detailed hit probability calculation with wind handling,
+    elevation error, and shooter skill level modeling.
+    """
     global showDebugModeNext
     global showHitModeNext
     
@@ -320,8 +354,12 @@ def displayAdvHitrate():
         showHitModeNext = True
         hitFrame.grid_remove()
 
-# Kick off the hitratecomparator
 def displaySimpleHitrate():
+    """Display the simple hit rate calculator interface.
+    
+    Provides basic hit probability calculation with shooter type selection
+    and real-world wind modeling.
+    """
     global showDebugModeNext
     global showHitModeNext
     
@@ -487,21 +525,34 @@ def displaySimpleHitrate():
         hitFrame.grid_remove()
 
 def hitAnalysisGuiFn(
-    targetSize,
+    target_size,
     caliber,
-    windErr,
-    velocityErr,
-    hitrateVariable,
-    targetShape,
+    wind_err,
+    velocity_err,
+    hit_rate_variable,
+    target_shape,
     accuracy,
-    shift = 0.0
-    ):       
+    shift=0.0
+):
+    """Run hit analysis and display results in the UI.
+    
+    Args:
+        target_size: Target size in MOA or inches.
+        caliber: Bullet diameter in inches.
+        wind_err: Wind reading error in MOA.
+        velocity_err: Velocity/elevation error in MOA.
+        hit_rate_variable: StringVar to display hit rate.
+        target_shape: Target shape enum value.
+        accuracy: Rifle precision in MOA.
+        shift: Horizontal shift in MOA (default 0).
+    """       
         
     if accuracy and accuracy > 0.01:
-        hitRate = HitAnalysis.hitAnalysis(accuracy,targetSize,windErr,velocityErr,1,caliber,targetShape,shift)
-        hitrateVariable.set("%s%%"%int(hitRate))
+        hit_rate = HitAnalysis.hitAnalysis(accuracy, target_size, wind_err, velocity_err, 1, caliber, target_shape, shift)
+        hit_rate_variable.set("%s%%" % int(hit_rate))
 
 def displayUsage():
+    """Display the help/usage documentation window."""
     popup = Toplevel(top)
 
     popup.geometry("785x700")
@@ -527,6 +578,7 @@ def displayUsage():
     notebook.pack(expand=1, fill="both", padx=(10,10))
 
 def displayAbout():
+    """Display the about/credits window."""
     popup = Toplevel(top)
 
     popup.geometry("785x400")
@@ -535,6 +587,7 @@ def displayAbout():
     labelOver.grid(column=0,row=0, padx=(10,10));
 
 def displayMathModelSelection():
+    """Display the math model selection dialog."""
     popup = Toplevel(top)
 
     popup.geometry("160x40")
@@ -550,6 +603,7 @@ def displayMathModelSelection():
     OptionMenu(popup, selectedModel, *options, command=setMathModel).grid(column=0,row=0, padx=(10,10))
    
 def displayHitrate():
+    """Display hit rate calculator (simple or advanced based on settings)."""
     if showAngularHitAnalysis:
         displayAdvHitrate()
     else:

@@ -1,1 +1,2 @@
-pyinstaller PyShootGui.py --onefile -i PyShootGui.ico
+pyinstaller.exe PyShootGui.py --onefile -i PyShootGui.ico --add-data "PyShootGui.ico:." --add-data "deer_silhouette.png:." --add-data "elk_silhouette.png:." --add-data "hog_silhouette.png:."
+
